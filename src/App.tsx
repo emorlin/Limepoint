@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import './App.css'
 import AppLayout from './components/AppLayout'
 import CommunityLeaderboard from "./components/CommunityLeaderboard";
