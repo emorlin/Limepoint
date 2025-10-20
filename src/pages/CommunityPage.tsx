@@ -1,5 +1,31 @@
 
 import { community } from "../data/communityData";
+import Tournaments from "../components/Tournaments";
+import { Link } from "react-router-dom";
+
+const tournaments = [
+    {
+        id: 1,
+        name: "Fredagspadel #23",
+
+        top3: ["Erik", "Tomas", "Mathias"],
+        date: "2025-10-12",
+    },
+    {
+        id: 2,
+        name: "Fredag Americano",
+
+        top3: ["Anna", "Jonas", "Micke"],
+        date: "2025-10-10",
+    },
+    {
+        id: 3,
+        name: "Västerås Open",
+
+        top3: ["Karin", "Erik", "Alex"],
+        date: "2025-10-08",
+    },
+];
 
 export default function CommunityPage() {
 
@@ -17,31 +43,16 @@ export default function CommunityPage() {
                 <p className="text-steelgrey mt-1">
                     {community.players.length} spelare • {community.tournaments.length} spelade turneringar
                 </p>
+                <button className="mt-8 mb-12 bg-limecore text-nightcourt font-semibold px-6 py-3 rounded-2xl hover:bg-limedark transition max-w-max">
+                    <Link to={`/tournaments/create?community=${community.id}`}>
+                        Skapa turnering
+                    </Link>
+                </button>
             </header>
 
             {/* TURNERINGAR */}
             <section>
-                <h2 className="text-2xl font-semibold text-courtwhite mb-3">
-                    Turneringar
-                </h2>
-                <ul className="divide-y divide-steelgrey/20">
-                    {community.tournaments.map((t) => (
-                        <li
-                            key={t.id}
-                            className="py-3 flex justify-between hover:bg-limedark/10 px-2 rounded-lg transition"
-                        >
-                            <div>
-                                <p className="text-limecore font-semibold">{t.name}</p>
-                                <p className="text-steelgrey text-sm">
-                                    {new Date(t.date).toLocaleDateString("sv-SE")}
-                                </p>
-                            </div>
-                            <p className="text-aquaserve font-medium">
-                                {t.matches.length} matcher
-                            </p>
-                        </li>
-                    ))}
-                </ul>
+                <Tournaments data={tournaments} showCommunity={false} />
             </section>
         </div>
     );

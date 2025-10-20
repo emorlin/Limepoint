@@ -48,7 +48,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
 
             {/* MAIN CONTENT */}
-            <main className="flex-1 p-6 md:p-10">{children}</main>
+            <main className="flex-1 p-4 md:p-10">{children}</main>
 
             {/* FOOTER */}
             <footer className="border-t border-steelgrey/30 text-sm py-4 px-6 flex justify-between items-center text-steelgrey">

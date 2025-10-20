@@ -20,10 +20,10 @@ export default function CommunityLeaderboard({ data }: { data: any[] }) {
                             <span className="text-limecore font-bold text-lg w-6 text-center">
                                 {i + 1}
                             </span>
-                            <span className="font-semibold text-courtwhite">
-                                <Link to="/communities/1"> {c.name}</Link>
 
-                            </span>
+                            <Link className="font-semibold text-courtwhite underline hover:text-limecore transition" to="/communities/1"> {c.name}</Link>
+
+
                         </div>
 
                         <div className="flex items-center gap-6 text-sm text-steelgrey">

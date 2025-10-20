@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 const communities = [
     {
@@ -26,6 +26,7 @@ export default function CreateTournamentPage() {
     const [availablePlayers, setAvailablePlayers] = useState<string[]>([]);
     const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
     const [newPlayerName, setNewPlayerName] = useState("");
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (communityId) {
@@ -33,6 +34,8 @@ export default function CreateTournamentPage() {
             if (found) {
                 setCommunity(found);
                 setAvailablePlayers(found.players);
+                setSelectedPlayers([]);
+                //   setSelectedPlayers(found.players);
             }
         } else if (newCommunityName) {
             setCommunity({ id: null, name: newCommunityName, players: [] });
@@ -71,7 +74,14 @@ export default function CreateTournamentPage() {
             players: selectedPlayers,
             pointsPerMatch,
         });
-        alert(`Turnering "${tournamentName}" skapad!`);
+        navigate("/tournaments/play", {
+            state: {
+                tournamentName,
+                community: community?.name,
+                players: selectedPlayers,
+                pointsPerMatch,
+            },
+        });
     };
 
     const canCreate =

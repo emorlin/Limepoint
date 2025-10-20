@@ -1,7 +1,11 @@
 import { Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
+type Props = {
+    data: any[];
+    showCommunity?: boolean; // ny prop
+};
 
-export default function Tournaments({ data }: { data: any[] }) {
+export default function Tournaments({ data, showCommunity = true }: Props) {
     return (
         <section className="bg-nightcourt rounded-2xl p-6 shadow-lg border border-steelgrey/20">
             <div className="flex items-center gap-2 mb-6">
@@ -16,7 +20,7 @@ export default function Tournaments({ data }: { data: any[] }) {
                     <thead>
                         <tr className="border-b border-steelgrey/30 text-steelgrey uppercase text-xs tracking-wider">
                             <th className="py-2">Turnering</th>
-                            <th className="py-2">Gemenskap</th>
+                            {showCommunity && <th className="py-2">Gemenskap</th>}
                             <th className="py-2">Topp 3</th>
                             <th className="py-2 text-right">Datum</th>
                         </tr>
@@ -27,17 +31,20 @@ export default function Tournaments({ data }: { data: any[] }) {
                                 key={t.id}
                                 className="border-b border-steelgrey/20 hover:bg-limedark/10 transition"
                             >
-                                {/* 🔗 Klickbart namn */}
                                 <td className="py-3 font-semibold text-courtwhite">
                                     <Link
                                         to={`/tournaments/${t.id}`}
-                                        className="text-limecore hover:underline"
+                                        className="font-semibold text-courtwhite underline hover:text-limecore transition"
                                     >
                                         {t.name}
                                     </Link>
                                 </td>
 
-                                <td className="py-3 text-steelgrey">{t.community}</td>
+                                {showCommunity && (
+                                    <td className="py-3 text-steelgrey">
+                                        {t.community?.trim() && t.community}
+                                    </td>
+                                )}
 
                                 <td className="py-3 text-aquaserve text-sm">
                                     {t.top3.map((player: string, i: number) => {

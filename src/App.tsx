@@ -7,6 +7,7 @@ import TournamentDetailPage from "./pages/TournamentDetailPage";
 import CreateTournamentPage from "./pages/CreateTournamentPage";
 import CommunityPage from "./pages/CommunityPage";
 import SelectCommunityPage from "./pages/SelectCommunityPage";
+import TournamentPlayPage from "./pages/TournamentPlayPage";
 export default function App() {
   return (
     <BrowserRouter>
@@ -22,7 +23,10 @@ export default function App() {
 
           <Route path="/tournaments/create" element={<CreateTournamentPage />} />
           <Route path="/tournaments/select-community" element={<SelectCommunityPage />} />
-
+          <Route
+            path="/tournaments/play"
+            element={<TournamentPlayPage key={crypto.randomUUID()} />}
+          />
         </Routes>
       </AppLayout>
     </BrowserRouter>

@@ -40,11 +40,14 @@ export default function TournamentDetailPage() {
 
     // Gruppérar matcher per runda
     const rounds = useMemo(() => {
-        return tournament.matches.reduce((acc: Record<number, typeof tournament.matches>, match) => {
-            acc[match.round] = acc[match.round] || [];
-            acc[match.round].push(match);
-            return acc;
-        }, {});
+        return tournament.matches.reduce(
+            (acc: Record<number, typeof tournament.matches>, match) => {
+                acc[match.round] = acc[match.round] || [];
+                acc[match.round].push(match);
+                return acc;
+            },
+            {}
+        );
     }, [tournament]);
 
     return (
@@ -91,10 +94,9 @@ export default function TournamentDetailPage() {
                             <button
                                 key={num}
                                 onClick={() => setActiveRound(num)}
-                                className={`w-10 h-10 rounded-full border-2 transition font-semibold
-              ${activeRound === num
-                                        ? "border-limecore text-limecore bg-limecore/10"
-                                        : "border-steelgrey/40 text-steelgrey hover:border-limecore/40 hover:text-limecore"
+                                className={`w-10 h-10 rounded-full border-2 transition font-semibold ${activeRound === num
+                                    ? "border-limecore text-limecore bg-limecore/10"
+                                    : "border-steelgrey/40 text-steelgrey hover:border-limecore/40 hover:text-limecore"
                                     }`}
                             >
                                 {num}
@@ -115,7 +117,7 @@ export default function TournamentDetailPage() {
                                     className="flex items-center justify-center gap-6 bg-nightcourt border border-steelgrey/20 rounded-2xl p-4"
                                 >
                                     {/* Lag 1 */}
-                                    <div className="flex flex-col items-end w-1/3 text-right">
+                                    <div className="flex flex-col items-start sm:items-end w-1/3 text-right">
                                         {m.team1.map((p) => (
                                             <span
                                                 key={p}
@@ -139,7 +141,7 @@ export default function TournamentDetailPage() {
                                     </div>
 
                                     {/* Lag 2 */}
-                                    <div className="flex flex-col items-start w-1/3 text-left">
+                                    <div className="flex flex-col sm:items-start items-end w-1/3 text-left">
                                         {m.team2.map((p) => (
                                             <span
                                                 key={p}
@@ -155,6 +157,7 @@ export default function TournamentDetailPage() {
                     </section>
                 </>
             )}
+
             {/* === TABELL === */}
             {activeTab === "tabell" && (
                 <section>
@@ -167,7 +170,15 @@ export default function TournamentDetailPage() {
                             <thead>
                                 <tr className="text-steelgrey border-b border-steelgrey/30 uppercase text-xs tracking-wider">
                                     <th className="py-2 px-3 text-left">Spelare</th>
-                                    <th className="py-2 px-3 text-center">G/W</th>
+                                    <th
+                                        className="py-2 px-3 text-center relative group"
+                                        title="Spelade / Vinster"
+                                    >
+                                        G/W
+                                        <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 hidden group-hover:block text-[11px] text-steelgrey bg-nightcourt border border-steelgrey/40 px-2 py-1 rounded-md whitespace-nowrap z-10">
+                                            Spelade / Vinster
+                                        </span>
+                                    </th>
                                     <th className="py-2 px-3 text-center">PD</th>
                                     <th className="py-2 px-3 text-center">Poäng</th>
                                 </tr>
@@ -186,7 +197,8 @@ export default function TournamentDetailPage() {
                                             const isTeam1 = team1.includes(player);
                                             const isTeam2 = team2.includes(player);
                                             if (isTeam1 || isTeam2) {
-                                                games++;
+                                                // ✅ En match spelad
+                                                games += 1;
                                                 const own = isTeam1 ? s1 : s2;
                                                 const opp = isTeam1 ? s2 : s1;
                                                 totalPoints += own;
