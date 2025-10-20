@@ -47,22 +47,6 @@ export default function TournamentDetailPage() {
         }, {});
     }, [tournament]);
 
-    // Räkna poäng per spelare (totalt)
-    const playerScores = useMemo(() => {
-        const scores: Record<string, number> = {};
-        tournament.players.forEach((p) => (scores[p] = 0));
-
-        tournament.matches.forEach((m) => {
-            const [score1, score2] = m.score;
-            m.team1.forEach((p) => (scores[p] += score1));
-            m.team2.forEach((p) => (scores[p] += score2));
-        });
-
-        return Object.entries(scores)
-            .map(([name, points]) => ({ name, points }))
-            .sort((a, b) => b.points - a.points);
-    }, [tournament]);
-
     return (
         <div className="max-w-4xl mx-auto flex flex-col gap-10">
             {/* HEADER */}
