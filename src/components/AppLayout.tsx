@@ -8,8 +8,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
         <div className="min-h-screen flex flex-col bg-nightcourt text-courtwhite font-sans">
             {/* HEADER */}
-            <header className="flex items-center justify-between px-6 py-4 border-b border-steelgrey/30">
-                <div className="flex items-center gap-3">
+            <header className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-steelgrey/30">
+                <Link to="/" className="flex items-center gap-3 hover:text-limecore transition">
                     <img
                         src="/logo-simple.png"
                         alt="Omslag saknas"
@@ -19,7 +19,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         <span className="text-limecore font-display text-2xl leading-none font-bold block">LimePoint</span>
                         <span className="text-aquaserve text-sm tracking-wide block">Americano made simple</span>
                     </div>
-                </div>
+                </Link>
+
 
                 {/* Hamburger menu (mobile) */}
                 <button

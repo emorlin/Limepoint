@@ -162,31 +162,52 @@ export default function CreateTournamentPage() {
                     Välj spelare
                 </h2>
 
-                <div className="relative mb-4 flex gap-2">
-                    <input
-                        list="players"
-                        placeholder="Sök eller lägg till spelare..."
-                        className="flex-1 bg-nightcourt border border-steelgrey/30 rounded-lg p-3 text-courtwhite"
-                        value={newPlayerName}
-                        onChange={(e) => setNewPlayerName(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleAddOrSelectPlayer()}
-                    />
+                <div className="relative mb-4 flex gap-2 items-stretch">
+                    {/* 🔍 Inputfält med egen pil */}
+                    <div className="relative flex-1">
+                        <input
+                            list="players"
+                            placeholder="Sök eller lägg till spelare..."
+                            className="w-full bg-nightcourt border border-steelgrey/30 rounded-lg p-3 pr-10 text-courtwhite placeholder-steelgrey appearance-none focus:outline-none focus:border-limecore transition"
+                            value={newPlayerName}
+                            onChange={(e) => setNewPlayerName(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleAddOrSelectPlayer()}
+                        />
+                        <datalist id="players">
+                            {availablePlayers.map((p) => (
+                                <option key={p} value={p} />
+                            ))}
+                        </datalist>
+
+                        {/* 🔽 Anpassad pil (visas även i iOS) */}
+                        <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-5 h-5 text-steelgrey"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </span>
+                    </div>
+
+                    {/* ➕ Knapp */}
                     <button
                         onClick={handleAddOrSelectPlayer}
                         disabled={!newPlayerName.trim()}
                         className="bg-limecore text-nightcourt font-semibold px-4 rounded-lg hover:bg-limedark transition disabled:opacity-50"
                     >
-                        {availablePlayers.includes(newPlayerName.trim())
-                            ? "Välj"
-                            : "Lägg till"}
+                        {availablePlayers.includes(newPlayerName.trim()) ? 'Välj' : 'Lägg till'}
                     </button>
-
-                    <datalist id="players">
-                        {availablePlayers.map((p) => (
-                            <option key={p} value={p} />
-                        ))}
-                    </datalist>
                 </div>
+
 
                 {selectedPlayers.length > 0 && (
                     <ul className="flex flex-wrap gap-2 mb-4">

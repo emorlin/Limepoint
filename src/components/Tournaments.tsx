@@ -31,7 +31,7 @@ export default function Tournaments({ data, showCommunity = true }: Props) {
                                 key={t.id}
                                 className="border-b border-steelgrey/20 hover:bg-limedark/10 transition"
                             >
-                                <td className="py-3 font-semibold text-courtwhite">
+                                <td className="py-3 font-semibold text-courtwhite whitespace-nowrap pr-4">
                                     <Link
                                         to={`/tournaments/${t.id}`}
                                         className="font-semibold text-courtwhite underline hover:text-limecore transition"
@@ -41,12 +41,12 @@ export default function Tournaments({ data, showCommunity = true }: Props) {
                                 </td>
 
                                 {showCommunity && (
-                                    <td className="py-3 text-steelgrey">
+                                    <td className="py-3 text-steelgrey whitespace-nowrap  pr-4">
                                         {t.community?.trim() && t.community}
                                     </td>
                                 )}
 
-                                <td className="py-3 text-aquaserve text-sm">
+                                <td className="py-3 text-aquaserve text-sm whitespace-nowrap  pr-4">
                                     {t.top3.map((player: string, i: number) => {
                                         const medalColors = [
                                             "text-yellow-400",
@@ -67,7 +67,7 @@ export default function Tournaments({ data, showCommunity = true }: Props) {
                                     })}
                                 </td>
 
-                                <td className="py-3 text-right text-steelgrey">
+                                <td className="py-3 text-right text-steelgrey whitespace-nowrap">
                                     {new Date(t.date).toLocaleDateString("sv-SE", {
                                         day: "2-digit",
                                         month: "short",

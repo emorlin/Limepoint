@@ -14,7 +14,7 @@ export default function CommunityLeaderboard({ data }: { data: any[] }) {
                 {data.map((c, i) => (
                     <li
                         key={c.id}
-                        className="flex items-center justify-between py-3 px-1 hover:bg-limedark/10 rounded-lg transition"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-1 hover:bg-limedark/10 rounded-lg transition"
                     >
                         <div className="flex items-center gap-4">
                             <span className="text-limecore font-bold text-lg w-6 text-center">
@@ -26,7 +26,7 @@ export default function CommunityLeaderboard({ data }: { data: any[] }) {
 
                         </div>
 
-                        <div className="flex items-center gap-6 text-sm text-steelgrey">
+                        <div className="flex items-center gap-6 pl-10 pt-1 sm:pt-0 sm:pl-0 text-sm text-steelgrey">
                             <span className="text-aquaserve font-medium">
                                 {c.tournaments} turneringar
                             </span>
