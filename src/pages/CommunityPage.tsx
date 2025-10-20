@@ -1,24 +1,8 @@
-import { useMemo } from "react";
+
 import { community } from "../data/communityData";
 
 export default function CommunityPage() {
-    // 🔢 Räkna ut totalpoäng per spelare
-    const playerTotals = useMemo(() => {
-        const totals: Record<string, number> = {};
-        community.players.forEach((p) => (totals[p] = 0));
 
-        community.tournaments.forEach((t) => {
-            t.matches.forEach(({ team1, team2, score }) => {
-                const [s1, s2] = score;
-                team1.forEach((p) => (totals[p] += s1));
-                team2.forEach((p) => (totals[p] += s2));
-            });
-        });
-
-        return Object.entries(totals)
-            .map(([name, points]) => ({ name, points }))
-            .sort((a, b) => b.points - a.points);
-    }, []);
 
     return (
         <div className="max-w-4xl mx-auto flex flex-col gap-10">
