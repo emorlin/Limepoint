@@ -51,7 +51,7 @@ const generateAmericanoMatches = (players: string[]): Match[] => {
             }
         }
         // enkel rotation
-        const fixed = shuffled[0];
+        //  const fixed = shuffled[0];
         const rest = shuffled.slice(1);
         shuffled.splice(1, n - 1, ...rest.slice(-1), ...rest.slice(0, -1));
     }
