@@ -127,19 +127,28 @@ export default function CreateTournamentPage() {
                     Inställningar
                 </h2>
                 <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-courtwhite font-semibold mb-2">
+                    <div className="mb-4">
+                        <label
+                            htmlFor="numPlayers"
+                            className="block text-steelgrey text-sm font-medium mb-1"
+                        >
                             Antal spelare
                         </label>
-                        <input
-                            type="number"
-                            min={2}
-                            max={32}
+
+                        <select
+                            id="numPlayers"
                             value={numPlayers}
                             onChange={(e) => setNumPlayers(Number(e.target.value))}
                             className="w-full bg-nightcourt border border-steelgrey/30 rounded-lg p-3 text-courtwhite"
-                        />
+                        >
+                            {[4, 8, 12, 16].map((num) => (
+                                <option key={num} value={num}>
+                                    {num} spelare
+                                </option>
+                            ))}
+                        </select>
                     </div>
+
                     <div>
                         <label className="block text-courtwhite font-semibold mb-2">
                             Poäng per match
