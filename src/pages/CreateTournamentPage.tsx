@@ -74,7 +74,11 @@ export default function CreateTournamentPage() {
         alert(`Turnering "${tournamentName}" skapad!`);
     };
 
-    const canCreate = tournamentName.trim() && selectedPlayers.length >= 4;
+    const canCreate =
+        tournamentName.trim().length > 0 &&
+        selectedPlayers.length === numPlayers;
+
+    console.log(canCreate);
 
     return (
         <div className="max-w-4xl mx-auto flex flex-col gap-10">
@@ -192,6 +196,13 @@ export default function CreateTournamentPage() {
                         ))}
                     </ul>
                 )}
+
+                {selectedPlayers.length < numPlayers && (
+                    <p className="text-sm text-steelgrey text-center">
+                        {selectedPlayers.length} av {numPlayers} tillagda
+                    </p>
+                )}
+
             </section>
 
             {/* SKAPA */}
