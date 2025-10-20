@@ -10,7 +10,7 @@ export default function CommunityLeaderboard({ data }: { data: any[] }) {
                 </h2>
             </div>
 
-            <ul className="divide-y divide-steelgrey/20">
+            <ul className="divide-y divide-steelgrey/20 ">
                 {data.map((c, i) => (
                     <li
                         key={c.id}
