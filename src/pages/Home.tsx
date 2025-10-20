@@ -1,6 +1,6 @@
 import CommunityLeaderboard from "../components/CommunityLeaderboard";
 import Tournaments from "../components/Tournaments";
-
+import { Link } from "react-router-dom";
 const communities = [
     { id: 1, name: "Sublime Slayers", tournaments: 14, lastPlayed: "2025-10-12" },
     { id: 2, name: "Södermalm Smashers", tournaments: 9, lastPlayed: "2025-10-05" },
@@ -40,8 +40,9 @@ export default function Home() {
                 <p className="text-aquaserve text-xl mb-8">Americano made simple</p>
                 <p>Skapa, spela och följ dina Americano-turneringar på ett enklare sätt.</p>
                 <p>LimePoint samlar spelare, resultat och gemenskaper på ett ställe — utan krångel, bara padelglädje.</p>
+
                 <button className="mt-8 mb-12 bg-limecore text-nightcourt font-semibold px-6 py-3 rounded-2xl hover:bg-limedark transition max-w-max">
-                    Skapa turnering
+                    <Link to="/tournaments/select-community">Skapa turnering</Link>
                 </button>
             </div>
             <CommunityLeaderboard data={communities} />

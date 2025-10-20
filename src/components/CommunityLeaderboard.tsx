@@ -1,5 +1,5 @@
 import { Trophy } from "lucide-react";
-
+import { Link } from "react-router-dom";
 export default function CommunityLeaderboard({ data }: { data: any[] }) {
     return (
         <section className="bg-nightcourt rounded-2xl p-6 shadow-lg border border-steelgrey/20">
@@ -20,7 +20,10 @@ export default function CommunityLeaderboard({ data }: { data: any[] }) {
                             <span className="text-limecore font-bold text-lg w-6 text-center">
                                 {i + 1}
                             </span>
-                            <span className="font-semibold text-courtwhite">{c.name}</span>
+                            <span className="font-semibold text-courtwhite">
+                                <Link to="/communities/1"> {c.name}</Link>
+
+                            </span>
                         </div>
 
                         <div className="flex items-center gap-6 text-sm text-steelgrey">
