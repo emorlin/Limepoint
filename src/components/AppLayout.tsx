@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -30,58 +31,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
                 {/* Desktop navigation */}
                 <nav className="hidden md:flex gap-8 font-medium">
-                    <a
-                        href="#"
-                        className="hover:text-limecore transition">
-                        Start
-                    </a>
-                    <a
-                        href="#"
-                        className="hover:text-limecore transition">
-                        Turneringar
-                    </a>
-                    <a
-                        href="#"
-                        className="hover:text-limecore transition">
-                        Gemenskap
-                    </a>
-                    <a
-                        href="#"
-                        className="hover:text-limecore transition">
-                        Profil
-                    </a>
+                    <Link to="/" className="hover:text-limecore transition">Start</Link>
+                    <Link to="/tournaments" className="hover:text-limecore transition">Turneringar</Link>
+                    <Link to="/communities" className="hover:text-limecore transition">Gemenskaper</Link>
                 </nav>
             </header>
 
             {/* MOBILE MENU OVERLAY */}
             {menuOpen && (
                 <div className="fixed inset-0 z-40 bg-nightcourt/95 backdrop-blur-sm flex flex-col items-center justify-center space-y-8 text-2xl font-semibold md:hidden">
-                    <a
-                        href="#"
-                        className="hover:text-limecore transition"
-                        onClick={() => setMenuOpen(false)}>
-                        Start
-                    </a>
-                    <a
-                        href="#"
-                        className="hover:text-limecore transition"
-                        onClick={() => setMenuOpen(false)}>
-                        Turneringar
-                    </a>
-                    <a
-                        href="#"
-                        className="hover:text-limecore transition"
-                        onClick={() => setMenuOpen(false)}>
-                        Gemenskap
-                    </a>
-                    <a
-                        href="#"
-                        className="hover:text-limecore transition"
-                        onClick={() => setMenuOpen(false)}>
-                        Profil
-                    </a>
+                    <Link to="/" onClick={() => setMenuOpen(false)} className="hover:text-limecore transition">Start</Link>
+                    <Link to="/tournaments" onClick={() => setMenuOpen(false)} className="hover:text-limecore transition">Turneringar</Link>
+                    <Link to="/communities" onClick={() => setMenuOpen(false)} className="hover:text-limecore transition">Gemenskaper</Link>
                 </div>
             )}
+
 
             {/* MAIN CONTENT */}
             <main className="flex-1 p-6 md:p-10">{children}</main>

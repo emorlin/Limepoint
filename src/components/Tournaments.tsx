@@ -1,4 +1,5 @@
 import { Calendar } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Tournaments({ data }: { data: any[] }) {
     return (
@@ -26,13 +27,30 @@ export default function Tournaments({ data }: { data: any[] }) {
                                 key={t.id}
                                 className="border-b border-steelgrey/20 hover:bg-limedark/10 transition"
                             >
-                                <td className="py-3 font-semibold text-courtwhite">{t.name}</td>
+                                {/* 🔗 Klickbart namn */}
+                                <td className="py-3 font-semibold text-courtwhite">
+                                    <Link
+                                        to={`/tournaments/${t.id}`}
+                                        className="text-limecore hover:underline"
+                                    >
+                                        {t.name}
+                                    </Link>
+                                </td>
+
                                 <td className="py-3 text-steelgrey">{t.community}</td>
+
                                 <td className="py-3 text-aquaserve text-sm">
                                     {t.top3.map((player: string, i: number) => {
-                                        const medalColors = ["text-yellow-400", "text-gray-300", "text-amber-600"];
+                                        const medalColors = [
+                                            "text-yellow-400",
+                                            "text-gray-300",
+                                            "text-amber-600",
+                                        ];
                                         return (
-                                            <span key={i} className="mr-4 flex items-center inline-flex">
+                                            <span
+                                                key={i}
+                                                className="mr-4 flex items-center inline-flex"
+                                            >
                                                 <span className={`${medalColors[i]} mr-1`}>
                                                     {["🥇", "🥈", "🥉"][i]}
                                                 </span>
@@ -41,6 +59,7 @@ export default function Tournaments({ data }: { data: any[] }) {
                                         );
                                     })}
                                 </td>
+
                                 <td className="py-3 text-right text-steelgrey">
                                     {new Date(t.date).toLocaleDateString("sv-SE", {
                                         day: "2-digit",
