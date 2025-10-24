@@ -45,28 +45,28 @@ export default function Tournaments({ data, showCommunity = true }: Props) {
                                         {t.community?.trim() && t.community}
                                     </td>
                                 )}
-
-                                <td className="py-3 text-aquaserve text-sm whitespace-nowrap  pr-4">
-                                    {t.top3.map((player: string, i: number) => {
-                                        const medalColors = [
-                                            "text-yellow-400",
-                                            "text-gray-300",
-                                            "text-amber-600",
-                                        ];
-                                        return (
-                                            <span
-                                                key={i}
-                                                className="mr-4 flex items-center inline-flex"
-                                            >
-                                                <span className={`${medalColors[i]} mr-1`}>
-                                                    {["🥇", "🥈", "🥉"][i]}
+                                {t.top3 && (
+                                    <td className="py-3 text-aquaserve text-sm whitespace-nowrap  pr-4">
+                                        {t.top3.map((player: string, i: number) => {
+                                            const medalColors = [
+                                                "text-yellow-400",
+                                                "text-gray-300",
+                                                "text-amber-600",
+                                            ];
+                                            return (
+                                                <span
+                                                    key={i}
+                                                    className="mr-4 flex items-center inline-flex"
+                                                >
+                                                    <span className={`${medalColors[i]} mr-1`}>
+                                                        {["🥇", "🥈", "🥉"][i]}
+                                                    </span>
+                                                    <span className="text-aquaserve">{player}</span>
                                                 </span>
-                                                <span className="text-aquaserve">{player}</span>
-                                            </span>
-                                        );
-                                    })}
-                                </td>
-
+                                            );
+                                        })}
+                                    </td>)}
+                                <td></td>
                                 <td className="py-3 text-right text-steelgrey whitespace-nowrap">
                                     {new Date(t.date).toLocaleDateString("sv-SE", {
                                         day: "2-digit",

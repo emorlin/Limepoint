@@ -16,7 +16,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/tournaments" element={<TournamentsPage />} />
-          <Route path="/communities" element={<CommunitiesPage />} />
+          <Route path="/communities/:slug" element={<CommunityPage />} />
 
           {/* 🆕 Enskild turnering */}
           <Route path="/tournaments/:id" element={<TournamentDetailPage />} />

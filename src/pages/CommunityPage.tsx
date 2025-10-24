@@ -1,58 +1,95 @@
-
-import { community } from "../data/communityData";
+import { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
 import Tournaments from "../components/Tournaments";
-import { Link } from "react-router-dom";
+import { fetchCommunityBySlug } from "../lib/data/communities";
 
-const tournaments = [
-    {
-        id: 1,
-        name: "Fredagspadel #23",
 
-        top3: ["Erik", "Tomas", "Mathias"],
-        date: "2025-10-12",
-    },
-    {
-        id: 2,
-        name: "Fredag Americano",
-
-        top3: ["Anna", "Jonas", "Micke"],
-        date: "2025-10-10",
-    },
-    {
-        id: 3,
-        name: "Västerås Open",
-
-        top3: ["Karin", "Erik", "Alex"],
-        date: "2025-10-08",
-    },
-];
+type Community = {
+    id: number;
+    name: string;
+    slug: string;
+    created_at: string;
+    players?: { id: number; name: string }[];
+    tournaments?: { id: number; name: string; created_at: string }[];
+};
 
 export default function CommunityPage() {
+    const { slug } = useParams();
+    const [community, setCommunity] = useState<Community | null>(null);
+    const [loading, setLoading] = useState(true);
 
+
+    useEffect(() => {
+        console.log("Slug från URL:", slug);
+    }, [slug]);
+
+    useEffect(() => {
+        if (!slug) return;
+
+        const loadCommunity = async () => {
+            setLoading(true);
+            const data = await fetchCommunityBySlug(slug);
+            setCommunity(data);
+            setLoading(false);
+        };
+
+        loadCommunity();
+    }, [slug]);
+
+    if (loading) {
+        return (
+            <div className="max-w-4xl mx-auto text-center mt-10 text-steelgrey">
+                <p>Laddar gemenskap...</p>
+            </div>
+        );
+    }
+
+    if (!community) {
+        return (
+            <div className="max-w-4xl mx-auto text-center mt-10 text-steelgrey">
+                <p>Gemenskapen kunde inte hittas.</p>
+                <Link to="/communities" className="text-limecore underline">
+                    Tillbaka till alla gemenskaper
+                </Link>
+            </div>
+        );
+    }
+
+    const tournaments = community.tournaments || [];
 
     return (
         <div className="max-w-4xl mx-auto flex flex-col gap-10">
-            {/* HEADER */}
+            {/* === HEADER === */}
             <header>
                 <h1 className="text-4xl font-display text-limecore mb-2">
                     {community.name}
                 </h1>
                 <p className="text-aquaserve">
-                    Grundad {new Date(community.createdAt).toLocaleDateString("sv-SE")}
+                    Grundad{" "}
+                    {community.created_at
+                        ? new Date(community.created_at).toLocaleDateString("sv-SE")
+                        : "okänt datum"}
                 </p>
                 <p className="text-steelgrey mt-1">
-                    {community.players.length} spelare • {community.tournaments.length} spelade turneringar
+                    {(community.players?.length || 0)} spelare •{" "}
+                    {(community.tournaments?.length || 0)} spelade turneringar
                 </p>
                 <button className="mt-8 mb-12 bg-limecore text-nightcourt font-semibold px-6 py-3 rounded-2xl hover:bg-limedark transition max-w-max">
-                    <Link to={`/tournaments/create?community=${community.id}`}>
+                    <Link to={`/tournaments/create?community=${community.slug}`}>
                         Skapa turnering
                     </Link>
                 </button>
             </header>
 
-            {/* TURNERINGAR */}
+            {/* === TURNERINGAR === */}
             <section>
-                <Tournaments data={tournaments} showCommunity={false} />
+                {tournaments.length > 0 ? (
+                    <Tournaments data={tournaments} showCommunity={false} />
+                ) : (
+                    <p className="text-steelgrey italic">
+                        Inga turneringar spelade ännu.
+                    </p>
+                )}
             </section>
         </div>
     );

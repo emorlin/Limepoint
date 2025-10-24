@@ -1,25 +1,14 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-
-const communities = [
-    {
-        id: 1,
-        name: "Sublime Slayers",
-        players: ["Erik", "Tomas", "Mathias", "Anna", "Jonas", "Micke", "Karin", "Alex"],
-    },
-    {
-        id: 2,
-        name: "Södermalm Smashers",
-        players: ["Anna", "Jonas", "Micke", "Lisa", "Henrik"],
-    },
-];
+import { fetchCommunityBySlug } from "../lib/data/communities";
 
 export default function CreateTournamentPage() {
     const [searchParams] = useSearchParams();
-    const communityId = searchParams.get("community");
+    const slug = searchParams.get("slug");
     const newCommunityName = searchParams.get("newCommunity");
 
     const [community, setCommunity] = useState<any | null>(null);
+    const [loading, setLoading] = useState(true);
     const [tournamentName, setTournamentName] = useState("");
     const [pointsPerMatch, setPointsPerMatch] = useState(16);
     const [numPlayers, setNumPlayers] = useState(8);
@@ -28,20 +17,31 @@ export default function CreateTournamentPage() {
     const [newPlayerName, setNewPlayerName] = useState("");
     const navigate = useNavigate();
 
+    // 🔹 Hämta community-data från Supabase
     useEffect(() => {
-        if (communityId) {
-            const found = communities.find((c) => c.id === Number(communityId));
-            if (found) {
-                setCommunity(found);
-                setAvailablePlayers(found.players);
-                setSelectedPlayers([]);
-                //   setSelectedPlayers(found.players);
+        async function loadCommunity() {
+            if (!slug && !newCommunityName) {
+                setLoading(false);
+                return;
             }
-        } else if (newCommunityName) {
-            setCommunity({ id: null, name: newCommunityName, players: [] });
-            setAvailablePlayers([]);
+
+            if (slug) {
+                const data = await fetchCommunityBySlug(slug);
+                if (data) {
+                    setCommunity(data);
+                    const playerNames = (data.players || []).map((p: any) => p.name);
+                    setAvailablePlayers(playerNames);
+                    setSelectedPlayers(playerNames);
+                }
+            } else if (newCommunityName) {
+                setCommunity({ id: null, name: newCommunityName, players: [] });
+            }
+
+            setLoading(false);
         }
-    }, [communityId, newCommunityName]);
+
+        loadCommunity();
+    }, [slug, newCommunityName]);
 
     const handleAddPlayer = (player: string) => {
         if (player && !selectedPlayers.includes(player)) {
@@ -68,27 +68,34 @@ export default function CreateTournamentPage() {
     };
 
     const handleCreate = () => {
-        console.log({
-            tournamentName,
-            community: community?.name,
-            players: selectedPlayers,
-            pointsPerMatch,
-        });
         navigate("/tournaments/play", {
             state: {
                 tournamentName,
                 community: community?.name,
+                slug: community?.slug,
                 players: selectedPlayers,
                 pointsPerMatch,
             },
         });
     };
 
-    const canCreate =
-        tournamentName.trim().length > 0 &&
-        selectedPlayers.length === numPlayers;
+    const canCreate = tournamentName.trim().length > 0 && selectedPlayers.length === numPlayers;
 
-    console.log(canCreate);
+    if (loading) {
+        return (
+            <div className="max-w-4xl mx-auto text-center py-20 text-steelgrey">
+                Laddar gemenskap...
+            </div>
+        );
+    }
+
+    if (!community) {
+        return (
+            <div className="max-w-4xl mx-auto text-center py-20 text-red-400">
+                Kunde inte hitta gemenskap.
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-4xl mx-auto flex flex-col gap-10">
@@ -97,14 +104,12 @@ export default function CreateTournamentPage() {
                 <h1 className="text-4xl font-display text-limecore mb-2">
                     Skapa turnering
                 </h1>
-                {community && (
-                    <p className="text-steelgrey">
-                        Gemenskap:{" "}
-                        <span className="text-aquaserve font-medium">
-                            {community.name}
-                        </span>
-                    </p>
-                )}
+                <p className="text-steelgrey">
+                    Gemenskap:{" "}
+                    <span className="text-aquaserve font-medium">
+                        {community.name}
+                    </span>
+                </p>
             </header>
 
             {/* TURNERINGSNAMN */}
@@ -172,7 +177,6 @@ export default function CreateTournamentPage() {
                 </h2>
 
                 <div className="relative mb-4 flex gap-2 items-stretch">
-                    {/* 🔍 Inputfält med egen pil */}
                     <div className="relative flex-1">
                         <input
                             list="players"
@@ -180,7 +184,7 @@ export default function CreateTournamentPage() {
                             className="w-full bg-nightcourt border border-steelgrey/30 rounded-lg p-3 pr-10 text-courtwhite placeholder-steelgrey appearance-none focus:outline-none focus:border-limecore transition"
                             value={newPlayerName}
                             onChange={(e) => setNewPlayerName(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleAddOrSelectPlayer()}
+                            onKeyDown={(e) => e.key === "Enter" && handleAddOrSelectPlayer()}
                         />
                         <datalist id="players">
                             {availablePlayers.map((p) => (
@@ -188,7 +192,6 @@ export default function CreateTournamentPage() {
                             ))}
                         </datalist>
 
-                        {/* 🔽 Anpassad pil (visas även i iOS) */}
                         <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -207,16 +210,14 @@ export default function CreateTournamentPage() {
                         </span>
                     </div>
 
-                    {/* ➕ Knapp */}
                     <button
                         onClick={handleAddOrSelectPlayer}
                         disabled={!newPlayerName.trim()}
                         className="bg-limecore text-nightcourt font-semibold px-4 rounded-lg hover:bg-limedark transition disabled:opacity-50"
                     >
-                        {availablePlayers.includes(newPlayerName.trim()) ? 'Välj' : 'Lägg till'}
+                        {availablePlayers.includes(newPlayerName.trim()) ? "Välj" : "Lägg till"}
                     </button>
                 </div>
-
 
                 {selectedPlayers.length > 0 && (
                     <ul className="flex flex-wrap gap-2 mb-4">
@@ -242,7 +243,6 @@ export default function CreateTournamentPage() {
                         {selectedPlayers.length} av {numPlayers} tillagda
                     </p>
                 )}
-
             </section>
 
             {/* SKAPA */}
