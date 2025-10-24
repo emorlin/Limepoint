@@ -8,7 +8,7 @@ import CreateTournamentPage from "./pages/CreateTournamentPage";
 import CommunityPage from "./pages/CommunityPage";
 import SelectCommunityPage from "./pages/SelectCommunityPage";
 import TournamentPlayPage from "./pages/TournamentPlayPage";
-import SupabaseTest from "./components/SupabaseTest";
+
 export default function App() {
   return (
     <BrowserRouter>
