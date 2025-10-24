@@ -64,9 +64,8 @@ export default function Home() {
                 <p>Skapa, spela och följ dina Americano-turneringar på ett enklare sätt.</p>
                 <p>LimePoint samlar spelare, resultat och gemenskaper på ett ställe — utan krångel, bara padelglädje.</p>
 
-                <button className="mt-8 mb-12 bg-limecore text-nightcourt font-semibold px-6 py-3 rounded-2xl hover:bg-limedark transition max-w-max">
-                    <Link to="/tournaments/select-community">Skapa turnering</Link>
-                </button>
+                <Link className="inline-block mt-8 mb-12 bg-limecore text-nightcourt font-semibold px-6 py-3 rounded-2xl hover:bg-limedark transition max-w-max" to="/tournaments/select-community">Skapa turnering</Link>
+
             </div>
             <CommunityLeaderboard
                 data={communities.map((c) => ({
