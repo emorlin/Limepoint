@@ -29,7 +29,7 @@ export default function App() {
             element={<TournamentPlayPage key={crypto.randomUUID()} />}
           />
         </Routes>
-        <SupabaseTest />
+
       </AppLayout>
     </BrowserRouter>
   );

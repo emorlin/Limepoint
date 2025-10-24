@@ -43,11 +43,11 @@ export default function CommunityPage() {
                 <p className="text-steelgrey mt-1">
                     {community.players.length} spelare • {community.tournaments.length} spelade turneringar
                 </p>
-                <button className="mt-8 mb-12 bg-limecore text-nightcourt font-semibold px-6 py-3 rounded-2xl hover:bg-limedark transition max-w-max">
-                    <Link to={`/tournaments/create?community=${community.id}`}>
-                        Skapa turnering
-                    </Link>
-                </button>
+
+                <Link className="inline-block mt-8 mb-12 bg-limecore text-nightcourt font-semibold px-6 py-3 rounded-2xl hover:bg-limedark transition max-w-max" to={`/tournaments/create?community=${community.id}`}>
+                    Skapa turnering
+                </Link>
+
             </header>
 
             {/* TURNERINGAR */}
