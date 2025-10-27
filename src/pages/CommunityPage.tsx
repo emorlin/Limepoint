@@ -4,6 +4,8 @@ import Tournaments from "../components/Tournaments";
 import { fetchCommunityBySlug } from "../lib/data/communities";
 import { getRecentTournaments } from "../lib/data/tournaments";
 
+import { fetchPlayersByCommunity, deactivatePlayer } from "../lib/data/players";
+
 type Community = {
     id: number;
     name: string;
@@ -17,7 +19,8 @@ export default function CommunityPage() {
     const { slug } = useParams();
     const [community, setCommunity] = useState<Community | null>(null);
     const [loading, setLoading] = useState(true);
-
+    const [players, setPlayers] = useState<any[]>([]);
+    const [loadingPlayers, setLoadingPlayers] = useState(true);
 
     const [error, setError] = useState<string | null>(null);
     const [tournaments, setTournaments] = useState([]);
@@ -42,6 +45,16 @@ export default function CommunityPage() {
     useEffect(() => {
         getRecentTournaments().then(setTournaments).finally(() => setLoading(false));
     }, []);
+
+    useEffect(() => {
+        async function loadPlayers() {
+            if (!community?.id) return;
+            const data = await fetchPlayersByCommunity(community.id);
+            setPlayers(data);
+            setLoadingPlayers(false);
+        }
+        loadPlayers();
+    }, [community]);
 
     if (loading)
         return (
@@ -71,6 +84,24 @@ export default function CommunityPage() {
         );
     }
 
+
+    const handleDeactivate = async (id: string, name: string) => {
+        if (!confirm(`Vill du verkligen avaktivera ${name}?`)) return;
+        try {
+            await deactivatePlayer(id);
+            setPlayers((prev) => prev.filter((p) => p.id !== id));
+        } catch {
+            alert("Ett fel uppstod vid avaktivering.");
+        }
+    };
+
+    if (loadingPlayers) {
+        return (
+            <div className="text-steelgrey text-center py-10">
+                Hämtar spelare...
+            </div>
+        );
+    }
 
 
     return (
@@ -108,6 +139,40 @@ export default function CommunityPage() {
                     </p>
                 )}
             </section>
+
+            <section className="bg-nightcourt rounded-2xl p-6 shadow-lg border border-steelgrey/20">
+                <h2 className="text-2xl font-display font-bold text-limecore mb-4">
+                    Aktiva spelare
+                </h2>
+
+                {players.length === 0 ? (
+                    <p className="text-steelgrey">Inga aktiva spelare i denna gemenskap.</p>
+                ) : (
+                    <ul className="divide-y divide-steelgrey/20">
+                        {players.map((p) => (
+                            <li
+                                key={p.id}
+                                className="flex justify-between items-center py-3"
+                            >
+                                <div>
+                                    <p className="text-courtwhite font-medium">{p.name}</p>
+                                    <p className="text-steellight text-sm">
+                                        Skapad {new Date(p.created_at).toLocaleDateString("sv-SE")}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => handleDeactivate(p.id, p.name)}
+                                    className="text-red-400 hover:text-red-500 text-sm font-semibold transition"
+                                >
+                                    Arkivera
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
         </div>
+
+
     );
 }

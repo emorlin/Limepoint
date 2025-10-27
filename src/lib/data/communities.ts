@@ -108,5 +108,10 @@ export async function fetchCommunityBySlug(slug: string) {
     }
 
     console.log("✅ Hämtad community:", data);
+    // ✅ Filtrera bort inaktiva spelare direkt i JS
+    if (data?.players) {
+        data.players = data.players.filter((p: any) => p.active !== false);
+    }
+
     return data;
 }
