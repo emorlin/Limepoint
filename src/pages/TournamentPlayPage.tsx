@@ -66,18 +66,23 @@ export default function TournamentPlayPage() {
     }, [id, navigate, localData]);
 
     // === Uppdatera resultat lokalt ===
-    const updateScore = (matchId: string, team: 1 | 2, value: number): void => {
+    const updateScore = (matchId: string, team: 1 | 2, value: string): void => {
         setMatches((prev) =>
-            prev.map((m) =>
-                m.id === matchId
+            prev.map((m) => {
+                const num = value === "" ? NaN : Number(value);
+                return m.id === matchId
                     ? {
                         ...m,
-                        score: team === 1 ? [value, m.score[1]] : [m.score[0], value],
+                        score:
+                            team === 1
+                                ? [num, m.score[1]]
+                                : [m.score[0], num],
                     }
-                    : m
-            )
+                    : m;
+            })
         );
     };
+
 
     // === Gruppera per runda ===
     const rounds = useMemo<Record<number, Match[]>>(() => {
@@ -274,32 +279,41 @@ export default function TournamentPlayPage() {
                                                 ) : (
                                                     <div className="flex gap-3 items-center">
                                                         <input
-                                                            type="number"
-                                                            min={0}
-                                                            max={pointsPerMatch}
-                                                            value={m.score[0]}
-                                                            onChange={(e) =>
-                                                                updateScore(m.id, 1, Number(e.target.value))
-                                                            }
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={Number.isNaN(m.score[0]) ? "" : m.score[0]}
+                                                            onChange={(e) => {
+                                                                let val = e.target.value.replace(/[^0-9]/g, "");
+                                                                const num = Number(val);
+                                                                if (num > pointsPerMatch) val = String(pointsPerMatch);
+                                                                updateScore(m.id, 1, val);
+                                                            }}
+                                                            placeholder={`0–${pointsPerMatch}`}
                                                             className={`w-16 bg-nightcourt border rounded-lg p-2 text-center text-courtwhite ${!isValid && total > 0
                                                                 ? "border-red-500/60"
                                                                 : "border-steelgrey/30"
                                                                 }`}
                                                         />
+
                                                         <span className="text-steelgrey font-bold">–</span>
+
                                                         <input
-                                                            type="number"
-                                                            min={0}
-                                                            max={pointsPerMatch}
-                                                            value={m.score[1]}
-                                                            onChange={(e) =>
-                                                                updateScore(m.id, 2, Number(e.target.value))
-                                                            }
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={Number.isNaN(m.score[1]) ? "" : m.score[1]}
+                                                            onChange={(e) => {
+                                                                let val = e.target.value.replace(/[^0-9]/g, "");
+                                                                const num = Number(val);
+                                                                if (num > pointsPerMatch) val = String(pointsPerMatch);
+                                                                updateScore(m.id, 2, val);
+                                                            }}
+                                                            placeholder={`0–${pointsPerMatch}`}
                                                             className={`w-16 bg-nightcourt border rounded-lg p-2 text-center text-courtwhite ${!isValid && total > 0
                                                                 ? "border-red-500/60"
                                                                 : "border-steelgrey/30"
                                                                 }`}
                                                         />
+
                                                     </div>
                                                 )}
                                                 <div className="text-xs text-steelgrey mt-1">
