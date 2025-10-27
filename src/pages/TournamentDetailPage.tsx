@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-
+import { useNavigate } from "react-router-dom";
 type Match = {
     round: number;
     team1: string[];
@@ -16,6 +16,7 @@ export default function TournamentDetailPage() {
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<"schema" | "tabell">("schema");
     const [activeRound, setActiveRound] = useState(1);
+    const navigate = useNavigate();
 
     // 🟢 Hämta turnering + matcher från Supabase
     useEffect(() => {
@@ -142,15 +143,26 @@ export default function TournamentDetailPage() {
     return (
         <div className="max-w-4xl mx-auto flex flex-col gap-10">
             {/* HEADER */}
-            <header>
-                <h1 className="text-4xl font-display text-limecore mb-2">
-                    {tournament.name}
-                </h1>
-                <p className="text-aquaserve text-lg">
-                    {tournament.community} •{" "}
-                    {new Date(tournament.date).toLocaleDateString("sv-SE")}
-                </p>
+            <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h1 className="text-4xl font-display text-limecore mb-2 sm:mb-0">
+                        {tournament.name}
+                    </h1>
+                    <p className="text-aquaserve text-lg">
+                        {tournament.community} •{" "}
+                        {new Date(tournament.date).toLocaleDateString("sv-SE")}
+                    </p>
+                </div>
+
+                {/* 🔹 Diskret länk till spela-vyn */}
+                <button
+                    onClick={() => navigate(`/tournaments/play/${tournament.id}`)}
+                    className="text-steelgrey hover:text-limecore text-sm font-medium border border-steelgrey/30 hover:border-limecore/40 rounded-lg px-3 py-1 mt-3 sm:mt-0 transition"
+                >
+                    Ändra resultat
+                </button>
             </header>
+
 
             {/* TABS */}
             <div className="flex justify-center border-b border-steelgrey/40 mb-4">

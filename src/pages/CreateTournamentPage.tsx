@@ -27,6 +27,9 @@ export default function CreateTournamentPage() {
             const slugParam = searchParams.get("slug") || searchParams.get("community");
             const newCommunityName = searchParams.get("newCommunity");
 
+
+
+
             if (!slugParam && !newCommunityName) {
                 setLoading(false);
                 return;
@@ -36,13 +39,14 @@ export default function CreateTournamentPage() {
                 const data = await fetchCommunityBySlug(slugParam);
                 if (data) {
                     setCommunity(data);
-                    const playerNames = (data.players || []).map((p: any) => p.name);
+                    const playerNames = (data.players || [])
+                        .filter((p: any) => p.active !== false)
+                        .map((p: any) => p.name);
                     setAvailablePlayers(playerNames);
                     //    setSelectedPlayers(playerNames);
-                } else {
-                    console.error("❌ Kunde inte hitta community med slug:", slugParam);
                 }
-            } else if (newCommunityName) {
+            }
+            else if (newCommunityName) {
                 setCommunity({ id: null, name: newCommunityName, players: [] });
             }
 

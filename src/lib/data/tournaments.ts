@@ -35,6 +35,7 @@ function calculateStats(matches: { team1: string[]; team2: string[]; score: [num
         });
 }
 
+// === Senaste turneringar (globalt) ===
 export async function getRecentTournaments(limit = 5) {
     const { data, error } = await supabase
         .from("tournaments")
@@ -64,7 +65,6 @@ export async function getRecentTournaments(limit = 5) {
     }
 
     const formatted = (data || []).map((t) => {
-        // Normalisera matcher till { team1: string[], team2: string[], score: [n,n] }
         const matches = (t.matches || []).map((m: any) => ({
             team1: [getPlayerName(m.team1_player1), getPlayerName(m.team1_player2)].filter(Boolean),
             team2: [getPlayerName(m.team2_player1), getPlayerName(m.team2_player2)].filter(Boolean),
@@ -72,7 +72,7 @@ export async function getRecentTournaments(limit = 5) {
         }));
 
         const stats = calculateStats(matches);
-        const top3 = stats.slice(0, 3).map((s) => s.name); // 🔹 alltid rena namn
+        const top3 = stats.slice(0, 3).map((s) => s.name);
 
         return {
             id: t.id,
@@ -81,14 +81,14 @@ export async function getRecentTournaments(limit = 5) {
             community: t.communities?.name || "-",
             communitySlug: t.communities?.slug,
             pointsPerMatch: t.points_per_match,
-            top3, // ✅ strängar
+            top3,
         };
     });
 
     return formatted;
 }
 
-// 🆕 Skapa en ny turnering i Supabase
+// === Skapa ny turnering ===
 export async function createTournament({
     name,
     communityId,
@@ -118,7 +118,7 @@ export async function createTournament({
     return data;
 }
 
-// 🆕 Kontrollera att spelaren finns, skapa annars ny
+// === Kontrollera att spelare finns, annars skapa ===
 export async function ensurePlayer(name: string, communityId: string) {
     const { data: existing } = await supabase
         .from("players")
@@ -143,7 +143,7 @@ export async function ensurePlayer(name: string, communityId: string) {
     return data.id;
 }
 
-// === Hämta turnering med matcher och spelare ===
+// === Hämta en turnering med alla matcher ===
 export async function getTournamentById(id: string) {
     const { data, error } = await supabase
         .from("tournaments")
@@ -173,7 +173,6 @@ export async function getTournamentById(id: string) {
         return null;
     }
 
-    // normalisera
     const matches = (data.matches || []).map((m: any) => ({
         id: m.id,
         round: m.round,
@@ -190,4 +189,58 @@ export async function getTournamentById(id: string) {
         pointsPerMatch: data.points_per_match,
         matches,
     };
+}
+
+// === Hämta turneringar för en specifik community ===
+export async function getTournamentsByCommunity(communityId: string, limit = 20) {
+    const { data, error } = await supabase
+        .from("tournaments")
+        .select(
+            `
+      id,
+      name,
+      created_at,
+      points_per_match,
+      communities ( id, name, slug ),
+      matches (
+        team1_player1:team1_player1 ( id, name ),
+        team1_player2:team1_player2 ( id, name ),
+        team2_player1:team2_player1 ( id, name ),
+        team2_player2:team2_player2 ( id, name ),
+        score1,
+        score2
+      )
+    `
+        )
+        .eq("community_id", communityId)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+    if (error) {
+        console.error("❌ Fel vid hämtning av turneringar för community:", error);
+        return [];
+    }
+
+    const formatted = (data || []).map((t: any) => {
+        const matches = (t.matches || []).map((m: any) => ({
+            team1: [getPlayerName(m.team1_player1), getPlayerName(m.team1_player2)].filter(Boolean),
+            team2: [getPlayerName(m.team2_player1), getPlayerName(m.team2_player2)].filter(Boolean),
+            score: [m.score1 ?? 0, m.score2 ?? 0] as [number, number],
+        }));
+
+        const stats = calculateStats(matches);
+        const top3 = stats.slice(0, 3).map((s) => s.name);
+
+        return {
+            id: t.id,
+            name: t.name,
+            date: t.created_at,
+            community: t.communities?.name,
+            communitySlug: t.communities?.slug,
+            pointsPerMatch: t.points_per_match,
+            top3, // ✅ FIX: nu får du även top3 här
+        };
+    });
+
+    return formatted;
 }

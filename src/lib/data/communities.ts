@@ -84,34 +84,39 @@ export async function getCommunityById(id: string) {
 }
 
 // === Hämta community via slug (för /communities/:slug) ===
-export async function fetchCommunityBySlug(slug: string) {
-    console.log("🔍 Hämtar community via slug:", slug);
 
+export async function fetchCommunityBySlug(slug: string) {
     const { data, error } = await supabase
         .from("communities")
         .select(
             `
-            id,
-            name,
-            slug,
-            created_at,
-            players ( id, name, created_at ),
-            tournaments ( id, name, points_per_match, created_at )
-        `
+      id,
+      name,
+      slug,
+      created_at,
+      players (
+        id,
+        name,
+        active,
+        created_at
+      )
+    `
         )
         .eq("slug", slug)
         .maybeSingle();
 
     if (error) {
-        console.error("❌ Fel vid hämtning av community via slug:", error.message);
+        console.error("❌ Fel vid hämtning av gemenskap:", error);
         return null;
     }
 
-    console.log("✅ Hämtad community:", data);
-    // ✅ Filtrera bort inaktiva spelare direkt i JS
-    if (data?.players) {
-        data.players = data.players.filter((p: any) => p.active !== false);
-    }
+    if (!data) return null;
 
-    return data;
+    // ✅ Filtrera bort inaktiva spelare
+    const activePlayers = (data.players || []).filter((p) => p.active !== false);
+
+    return {
+        ...data,
+        players: activePlayers,
+    };
 }
