@@ -1,3 +1,4 @@
+// src/pages/SelectCommunityPage.tsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -15,12 +16,12 @@ export default function SelectCommunityPage() {
     const [activeTab, setActiveTab] = useState<"existing" | "new">("existing");
     const [communities, setCommunities] = useState<Community[]>([]);
     const [selectedSlug, setSelectedSlug] = useState<string>("");
-    const [newCommunityName, setNewCommunityName] = useState("");
-    const [loading, setLoading] = useState(true);
+    const [newCommunityName, setNewCommunityName] = useState<string>("");
+    const [loading, setLoading] = useState<boolean>(true);
 
     // === Hämta alla gemenskaper ===
     useEffect(() => {
-        async function loadCommunities() {
+        const loadCommunities = async () => {
             const { data, error } = await supabase
                 .from("communities")
                 .select("id, name, slug, created_at")
@@ -28,16 +29,17 @@ export default function SelectCommunityPage() {
 
             if (error) {
                 console.error("❌ Fel vid hämtning av gemenskaper:", error);
-            } else {
-                setCommunities(data || []);
+            } else if (data) {
+                setCommunities(data as Community[]);
             }
             setLoading(false);
-        }
-        loadCommunities();
+        };
+
+        void loadCommunities();
     }, []);
 
     // === Skapa ny gemenskap ===
-    const handleCreateCommunity = async () => {
+    const handleCreateCommunity = async (): Promise<void> => {
         const name = newCommunityName.trim();
         if (!name) return;
 
@@ -49,7 +51,7 @@ export default function SelectCommunityPage() {
 
         const { data, error } = await supabase
             .from("communities")
-            .insert({ name, slug })
+            .insert([{ name, slug }])
             .select("slug")
             .single();
 
@@ -59,17 +61,24 @@ export default function SelectCommunityPage() {
             return;
         }
 
-        navigate(`/tournaments/create?slug=${data.slug}`);
-    };
-
-    const handleContinue = () => {
-        if (activeTab === "existing" && selectedSlug) {
-            navigate(`/tournaments/create?slug=${selectedSlug}`);
-        } else if (activeTab === "new" && newCommunityName.trim()) {
-            handleCreateCommunity();
+        const created = data as { slug: string } | null;
+        if (created?.slug) {
+            navigate(`/tournaments/create?slug=${created.slug}`);
+        } else {
+            console.error("❌ Slug saknas efter skapande av gemenskap.");
         }
     };
 
+    // === Hantera fortsättning beroende på vald flik ===
+    const handleContinue = (): void => {
+        if (activeTab === "existing" && selectedSlug) {
+            navigate(`/tournaments/create?slug=${selectedSlug}`);
+        } else if (activeTab === "new" && newCommunityName.trim()) {
+            void handleCreateCommunity();
+        }
+    };
+
+    // === Laddningsvy ===
     if (loading) {
         return (
             <div className="max-w-2xl mx-auto text-center py-20 text-steelgrey">
@@ -78,6 +87,7 @@ export default function SelectCommunityPage() {
         );
     }
 
+    // === Huvudvy ===
     return (
         <div className="max-w-2xl mx-auto flex flex-col gap-10">
             <header>

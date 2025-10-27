@@ -1,3 +1,4 @@
+// src/pages/CreateTournamentPage.tsx
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { fetchCommunityBySlug } from "../lib/data/communities";
@@ -5,30 +6,45 @@ import { createTournament, ensurePlayer } from "../lib/data/tournaments";
 import { generateAmericanoMatches } from "../utils/americano";
 import { supabase } from "../lib/supabase";
 
+// === Typer ===
+type Player = {
+    id: string;
+    name: string;
+    active?: boolean;
+};
+
+type Community = {
+    id: string | null;
+    name: string;
+    slug?: string;
+    players?: Player[];
+};
+
+type Tournament = {
+    id: string;
+    name: string;
+    community_id: string;
+    points_per_match: number;
+};
 
 export default function CreateTournamentPage() {
     const [searchParams] = useSearchParams();
-    const slug = searchParams.get("slug");
-    const newCommunityName = searchParams.get("newCommunity");
-
-    const [community, setCommunity] = useState<any | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [tournamentName, setTournamentName] = useState("");
-    const [pointsPerMatch, setPointsPerMatch] = useState(16);
-    const [numPlayers, setNumPlayers] = useState(8);
-    const [availablePlayers, setAvailablePlayers] = useState<string[]>([]);
-    const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
-    const [newPlayerName, setNewPlayerName] = useState("");
     const navigate = useNavigate();
 
+    const [community, setCommunity] = useState<Community | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [tournamentName, setTournamentName] = useState<string>("");
+    const [pointsPerMatch, setPointsPerMatch] = useState<number>(16);
+    const [numPlayers, setNumPlayers] = useState<number>(8);
+    const [availablePlayers, setAvailablePlayers] = useState<string[]>([]);
+    const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
+    const [newPlayerName, setNewPlayerName] = useState<string>("");
+
+    // === Ladda gemenskap ===
     useEffect(() => {
-        async function loadCommunity() {
-            // 🔹 tillåt både ?community=slug och ?slug=slug
+        const loadCommunity = async (): Promise<void> => {
             const slugParam = searchParams.get("slug") || searchParams.get("community");
             const newCommunityName = searchParams.get("newCommunity");
-
-
-
 
             if (!slugParam && !newCommunityName) {
                 setLoading(false);
@@ -38,34 +54,28 @@ export default function CreateTournamentPage() {
             if (slugParam) {
                 const data = await fetchCommunityBySlug(slugParam);
                 if (data) {
-                    setCommunity(data);
-                    const playerNames = (data.players || [])
-                        .filter((p: any) => p.active !== false)
-                        .map((p: any) => p.name);
+                    const typed = data as Community;
+                    setCommunity(typed);
+                    const playerNames = (typed.players ?? [])
+                        .filter((p) => p.active !== false)
+                        .map((p) => p.name);
                     setAvailablePlayers(playerNames);
-                    //    setSelectedPlayers(playerNames);
                 }
-            }
-            else if (newCommunityName) {
+            } else if (newCommunityName) {
                 setCommunity({ id: null, name: newCommunityName, players: [] });
             }
 
             setLoading(false);
-        }
+        };
 
-        loadCommunity();
+        void loadCommunity();
     }, [searchParams]);
 
-
-
-
-    // ...
-
-    const handleAddNewPlayer = async () => {
+    // === Lägg till ny spelare ===
+    const handleAddNewPlayer = async (): Promise<void> => {
         const name = newPlayerName.trim();
         if (!name || !community?.id) return;
 
-        // 🔸 Kolla om spelaren redan finns (case-insensitive)
         const exists = availablePlayers.some(
             (p) => p.toLowerCase() === name.toLowerCase()
         );
@@ -74,7 +84,6 @@ export default function CreateTournamentPage() {
             return;
         }
 
-        // 🔹 Spara i Supabase
         const { data, error } = await supabase
             .from("players")
             .insert([{ name, community_id: community.id }])
@@ -86,26 +95,23 @@ export default function CreateTournamentPage() {
             return;
         }
 
-        // ✅ Uppdatera lokalt
         const newName = data?.[0]?.name ?? name;
         setAvailablePlayers((prev) => [...prev, newName]);
         setSelectedPlayers((prev) => [...prev, newName]);
         setNewPlayerName("");
     };
 
-
-
-    const handleAddPlayer = (player: string) => {
+    const handleAddPlayer = (player: string): void => {
         if (player && !selectedPlayers.includes(player)) {
             setSelectedPlayers([...selectedPlayers, player]);
         }
     };
 
-    const handleRemovePlayer = (player: string) => {
+    const handleRemovePlayer = (player: string): void => {
         setSelectedPlayers(selectedPlayers.filter((p) => p !== player));
     };
 
-    const handleAddOrSelectPlayer = () => {
+    const handleAddOrSelectPlayer = (): void => {
         const name = newPlayerName.trim();
         if (!name) return;
 
@@ -119,7 +125,8 @@ export default function CreateTournamentPage() {
         setNewPlayerName("");
     };
 
-    const handleCreate = async () => {
+    // === Skapa turnering ===
+    const handleCreate = async (): Promise<void> => {
         if (!community) return;
         if (!community.id) {
             alert("Gemenskapen saknar ID – något gick fel.");
@@ -132,16 +139,16 @@ export default function CreateTournamentPage() {
         }
 
         try {
-            // 🔹 1. Skapa turneringen i Supabase
-            const tournament = await createTournament({
+            // 1. Skapa turneringen
+            const tournament = (await createTournament({
                 name: tournamentName.trim(),
                 communityId: community.id,
                 pointsPerMatch,
-            });
+            })) as Tournament;
 
             console.log("✅ Turnering skapad:", tournament.id);
 
-            // 🔹 2. Kontrollera att alla spelare finns (eller skapa dem)
+            // 2. Se till att alla spelare finns
             const playerIds: string[] = [];
             for (const name of selectedPlayers) {
                 const playerId = await ensurePlayer(name, community.id);
@@ -150,12 +157,11 @@ export default function CreateTournamentPage() {
 
             console.log("✅ Spelare:", playerIds);
 
-            // 🔹 3. Generera matcher via Americano-schema
+            // 3. Generera matcher
             const matches = generateAmericanoMatches(playerIds);
-
             console.log("✅ Matcher genererade:", matches.length);
 
-            // 🔹 4. Spara matcherna i Supabase
+            // 4. Spara matcherna
             const { error: matchError } = await supabase
                 .from("matches")
                 .insert(
@@ -174,8 +180,6 @@ export default function CreateTournamentPage() {
             if (matchError) throw matchError;
 
             console.log("✅ Matcher sparade i databasen!");
-
-            // 🔹 5. Navigera till turneringssidan
             navigate(`/tournaments/play/${tournament.id}`);
         } catch (err) {
             console.error("❌ Fel vid skapande av turnering:", err);
@@ -183,12 +187,12 @@ export default function CreateTournamentPage() {
         }
     };
 
-
     const canCreate =
         tournamentName.trim().length > 0 &&
         [4, 8, 12, 16].includes(numPlayers) &&
         selectedPlayers.length === numPlayers;
 
+    // === Utskrift ===
     if (loading) {
         return (
             <div className="max-w-4xl mx-auto text-center py-20 text-steelgrey">
@@ -214,9 +218,7 @@ export default function CreateTournamentPage() {
                 </h1>
                 <p className="text-steelgrey">
                     Gemenskap:{" "}
-                    <span className="text-aquaserve font-medium">
-                        {community.name}
-                    </span>
+                    <span className="text-aquaserve font-medium">{community.name}</span>
                 </p>
             </header>
 
@@ -285,8 +287,7 @@ export default function CreateTournamentPage() {
                 </h2>
 
                 <div className="grid md:grid-cols-2 gap-8">
-                    {/* --- Tillgängliga spelare --- */}
-                    {/* --- Tillgängliga spelare --- */}
+                    {/* Tillgängliga spelare */}
                     <div>
                         <h3 className="block text-courtwhite font-semibold mb-2">
                             Tillgängliga
@@ -310,9 +311,10 @@ export default function CreateTournamentPage() {
                                                 }`}
                                         >
                                             <span className="text-courtwhite">{p}</span>
-
                                             {isSelected ? (
-                                                <span className="text-steelgrey text-sm italic">Tillagd</span>
+                                                <span className="text-steelgrey text-sm italic">
+                                                    Tillagd
+                                                </span>
                                             ) : (
                                                 <button
                                                     onClick={() => handleAddPlayer(p)}
@@ -326,15 +328,14 @@ export default function CreateTournamentPage() {
                                 })}
                         </ul>
 
-                        {/* ➕ Lägg till ny spelare */}
-                        {/* ➕ Lägg till ny spelare */}
+                        {/* Lägg till ny spelare */}
                         <div className="flex gap-2 mt-4">
                             <input
                                 type="text"
                                 placeholder="Ny spelare..."
                                 value={newPlayerName}
                                 onChange={(e) => setNewPlayerName(e.target.value)}
-                                onKeyDown={(e) => e.key === "Enter" && handleAddNewPlayer()}
+                                onKeyDown={(e) => e.key === "Enter" && void handleAddNewPlayer()}
                                 className="flex-1 bg-nightcourt border border-steelgrey/30 rounded-lg p-2 text-courtwhite placeholder-steelgrey focus:outline-none focus:border-limecore transition"
                             />
                             <button
@@ -345,11 +346,9 @@ export default function CreateTournamentPage() {
                                 Lägg till
                             </button>
                         </div>
-
                     </div>
 
-
-                    {/* --- Valda spelare --- */}
+                    {/* Valda spelare */}
                     <div>
                         <h3 className="block text-courtwhite font-semibold mb-2">
                             Valda ({selectedPlayers.length}/{numPlayers})
@@ -378,7 +377,6 @@ export default function CreateTournamentPage() {
                     </div>
                 </div>
             </section>
-
 
             {/* SKAPA */}
             <div className="pt-6 text-center">

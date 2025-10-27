@@ -1,29 +1,46 @@
+// src/pages/TournamentDetailPage.tsx
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { useNavigate } from "react-router-dom";
+
+// === Typer ===
+type PlayerName = string;
+
 type Match = {
     round: number;
-    team1: string[];
-    team2: string[];
+    team1: PlayerName[];
+    team2: PlayerName[];
     score: [number, number];
 };
 
+type Tournament = {
+    id: string;
+    name: string;
+    community: string;
+    date: string;
+    pointsPerMatch: number;
+    players: PlayerName[];
+    matches: Match[];
+};
+
+// === Komponent ===
 export default function TournamentDetailPage() {
-    const { id } = useParams();
-    const [tournament, setTournament] = useState<any | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<"schema" | "tabell">("schema");
-    const [activeRound, setActiveRound] = useState(1);
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
-    // 🟢 Hämta turnering + matcher från Supabase
+    const [tournament, setTournament] = useState<Tournament | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<"schema" | "tabell">("schema");
+    const [activeRound, setActiveRound] = useState<number>(1);
+
+    // === Hämta turnering + matcher ===
     useEffect(() => {
-        async function fetchTournament() {
+        const fetchTournament = async (): Promise<void> => {
             const { data, error } = await supabase
                 .from("tournaments")
-                .select(`
+                .select(
+                    `
           id,
           name,
           created_at,
@@ -38,7 +55,8 @@ export default function TournamentDetailPage() {
             team2_player1:team2_player1 ( name ),
             team2_player2:team2_player2 ( name )
           )
-        `)
+        `
+                )
                 .eq("id", id)
                 .maybeSingle();
 
@@ -55,85 +73,89 @@ export default function TournamentDetailPage() {
                 return;
             }
 
-            const formattedMatches: Match[] = (data.matches || []).map((m: any) => ({
-                round: m.round || 1,
-                team1: [m.team1_player1?.name, m.team1_player2?.name].filter(Boolean),
-                team2: [m.team2_player1?.name, m.team2_player2?.name].filter(Boolean),
-                score: [m.score1 ?? 0, m.score2 ?? 0],
-            }));
+            // Typa data säkert
+            const formattedMatches: Match[] = ((data as any).matches ?? []).map(
+                (m: any) => ({
+                    round: m.round || 1,
+                    team1: [m.team1_player1?.name, m.team1_player2?.name].filter(
+                        Boolean
+                    ) as PlayerName[],
+                    team2: [m.team2_player1?.name, m.team2_player2?.name].filter(
+                        Boolean
+                    ) as PlayerName[],
+                    score: [m.score1 ?? 0, m.score2 ?? 0],
+                })
+            );
 
             const allPlayers = Array.from(
-                new Set(
-                    formattedMatches.flatMap((m) => [...m.team1, ...m.team2])
-                )
+                new Set(formattedMatches.flatMap((m) => [...m.team1, ...m.team2]))
             );
 
             setTournament({
-                id: data.id,
-                name: data.name,
-                community: data.communities?.name || "-",
-                date: data.created_at,
-                pointsPerMatch: data.points_per_match,
+                id: (data as any).id,
+                name: (data as any).name,
+                community: (data as any).communities?.name || "-",
+                date: (data as any).created_at,
+                pointsPerMatch: (data as any).points_per_match,
                 players: allPlayers,
                 matches: formattedMatches,
             });
 
             setLoading(false);
-        }
+        };
 
-        if (id) fetchTournament();
+        if (id) void fetchTournament();
     }, [id]);
 
-    // 🧮 Gruppérar matcher per runda
-    const rounds = useMemo(() => {
+    // === Gruppérar matcher per runda ===
+    const rounds = useMemo<Record<number, Match[]>>(() => {
         if (!tournament) return {};
-        return tournament.matches.reduce(
-            (acc: Record<number, Match[]>, match: Match) => {
-                acc[match.round] = acc[match.round] || [];
-                acc[match.round].push(match);
-                return acc;
-            },
-            {}
-        );
+        return tournament.matches.reduce<Record<number, Match[]>>((acc, match) => {
+            acc[match.round] = acc[match.round] || [];
+            acc[match.round].push(match);
+            return acc;
+        }, {});
     }, [tournament]);
 
+    // === Laddning & fel ===
     if (loading)
         return (
-            <div className="max-w-4xl mx-auto text-steelgrey">Laddar turnering...</div>
+            <div className="max-w-4xl mx-auto text-steelgrey">
+                Laddar turnering...
+            </div>
         );
 
     if (error)
-        return (
-            <div className="max-w-4xl mx-auto text-red-400">{error}</div>
-        );
+        return <div className="max-w-4xl mx-auto text-red-400">{error}</div>;
 
     if (!tournament) return null;
 
-    // === BERÄKNA STATISTIK ===
-    const stats = tournament.players.map((player: string) => {
+    // === Beräkna statistik ===
+    const stats = tournament.players.map((player) => {
         let games = 0;
         let wins = 0;
         let pd = 0;
-        let totalPoints = 0;
+        let points = 0;
 
-        tournament.matches.forEach(({ team1, team2, score }: Match) => {
+        tournament.matches.forEach(({ team1, team2, score }) => {
             const [s1, s2] = score;
             const isTeam1 = team1.includes(player);
             const isTeam2 = team2.includes(player);
+
             if (isTeam1 || isTeam2) {
                 games++;
                 const own = isTeam1 ? s1 : s2;
                 const opp = isTeam1 ? s2 : s1;
-                totalPoints += own;
+                points += own;
                 pd += own - opp;
                 if (own > opp) wins++;
             }
         });
 
-        return { name: player, games, wins, pd, points: totalPoints };
+        return { name: player, games, wins, pd, points };
     });
 
-    const sorted = stats.sort((a, b) => {
+    const sorted = [...stats].sort((a, b) => {
         if (b.points !== a.points) return b.points - a.points;
         if (b.pd !== a.pd) return b.pd - a.pd;
         return b.wins - a.wins;
@@ -154,7 +176,7 @@ export default function TournamentDetailPage() {
                     </p>
                 </div>
 
-                {/* 🔹 Diskret länk till spela-vyn */}
+                {/* 🔹 Gå till spela-vyn */}
                 <button
                     onClick={() => navigate(`/tournaments/play/${tournament.id}`)}
                     className="text-steelgrey hover:text-limecore text-sm font-medium border border-steelgrey/30 hover:border-limecore/40 rounded-lg px-3 py-1 mt-3 sm:mt-0 transition"
@@ -162,7 +184,6 @@ export default function TournamentDetailPage() {
                     Ändra resultat
                 </button>
             </header>
-
 
             {/* TABS */}
             <div className="flex justify-center border-b border-steelgrey/40 mb-4">

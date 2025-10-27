@@ -1,8 +1,10 @@
+// src/pages/TournamentPlayPage.tsx
 import { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { getTournamentById } from "../lib/data/tournaments";
 
+// === Typer ===
 type Match = {
     id: string;
     round: number;
@@ -12,46 +14,62 @@ type Match = {
     confirmed?: boolean;
 };
 
+type Tournament = {
+    id: string;
+    name: string;
+    community: string;
+    pointsPerMatch: number;
+    players?: string[];
+    matches: Match[];
+};
+
+// === Komponent ===
 export default function TournamentPlayPage() {
-    const { id } = useParams();
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const location = useLocation();
-    const localData = location.state as any;
+    const localData = location.state as Tournament | null;
 
-    const [tournament, setTournament] = useState<any | null>(null);
+    const [tournament, setTournament] = useState<Tournament | null>(null);
     const [matches, setMatches] = useState<Match[]>([]);
     const [activeTab, setActiveTab] = useState<"schema" | "tabell">("schema");
-    const [activeRound, setActiveRound] = useState(1);
-    const [loading, setLoading] = useState(true);
+    const [activeRound, setActiveRound] = useState<number>(1);
+    const [loading, setLoading] = useState<boolean>(true);
 
     // === Hämta turnering ===
     useEffect(() => {
-        async function load() {
-            if (localData?.tournamentName) {
-                // 🔹 Ny turnering via CreateTournamentPage
+        const load = async (): Promise<void> => {
+            if (localData?.name && localData.matches) {
+                // 🔹 Ny turnering via state
                 setTournament(localData);
-                setMatches(localData.matches || []);
+                setMatches(localData.matches);
                 setLoading(false);
-            } else if (id) {
+                return;
+            }
+
+            if (id) {
                 // 🔹 Hämta från Supabase
                 const data = await getTournamentById(id);
                 if (data) {
-                    setTournament(data);
-                    setMatches(data.matches);
+                    const typed = data as Tournament;
+                    setTournament(typed);
+                    setMatches(typed.matches);
                 }
                 setLoading(false);
-            } else {
-                navigate("/tournaments");
+                return;
             }
-        }
-        load();
-    }, [id, navigate]);
+
+            navigate("/tournaments");
+        };
+
+        void load();
+    }, [id, navigate, localData]);
 
     // === Uppdatera resultat lokalt ===
-    const updateScore = (id: string, team: 1 | 2, value: number) => {
+    const updateScore = (matchId: string, team: 1 | 2, value: number): void => {
         setMatches((prev) =>
             prev.map((m) =>
-                m.id === id
+                m.id === matchId
                     ? {
                         ...m,
                         score: team === 1 ? [value, m.score[1]] : [m.score[0], value],
@@ -62,8 +80,8 @@ export default function TournamentPlayPage() {
     };
 
     // === Gruppera per runda ===
-    const rounds = useMemo(() => {
-        return matches.reduce((acc: Record<number, Match[]>, m) => {
+    const rounds = useMemo<Record<number, Match[]>>(() => {
+        return matches.reduce<Record<number, Match[]>>((acc, m) => {
             acc[m.round] = acc[m.round] || [];
             acc[m.round].push(m);
             return acc;
@@ -75,7 +93,7 @@ export default function TournamentPlayPage() {
         if (!tournament?.players && matches.length === 0) return [];
 
         const players =
-            tournament?.players ||
+            tournament?.players ??
             Array.from(
                 new Set(
                     matches.flatMap((m) => [...m.team1, ...m.team2]).filter(Boolean)
@@ -114,12 +132,14 @@ export default function TournamentPlayPage() {
     });
 
     // === Spara resultat ===
-    const saveResult = async (match: Match) => {
+    const saveResult = async (match: Match): Promise<void> => {
+        if (!tournament) return;
+
         const total = match.score[0] + match.score[1];
-        if (total !== tournament.pointsPerMatch)
-            return alert(
-                `Summan måste bli exakt ${tournament.pointsPerMatch} poäng.`
-            );
+        if (total !== tournament.pointsPerMatch) {
+            alert(`Summan måste bli exakt ${tournament.pointsPerMatch} poäng.`);
+            return;
+        }
 
         const { error } = await supabase
             .from("matches")
@@ -135,6 +155,7 @@ export default function TournamentPlayPage() {
             return;
         }
 
+        // ✅ Toggle confirmed
         setMatches((prev) =>
             prev.map((m) =>
                 m.id === match.id ? { ...m, confirmed: !m.confirmed } : m
@@ -142,6 +163,7 @@ export default function TournamentPlayPage() {
         );
     };
 
+    // === Laddning / fel ===
     if (loading)
         return (
             <div className="max-w-4xl mx-auto text-center py-20 text-steelgrey">
@@ -158,6 +180,7 @@ export default function TournamentPlayPage() {
 
     const { name, community, pointsPerMatch } = tournament;
 
+    // === UI ===
     return (
         <div className="max-w-4xl mx-auto flex flex-col gap-10">
             {/* HEADER */}
@@ -258,8 +281,7 @@ export default function TournamentPlayPage() {
                                                             onChange={(e) =>
                                                                 updateScore(m.id, 1, Number(e.target.value))
                                                             }
-                                                            className={`w-16 bg-nightcourt border rounded-lg p-2 text-center text-courtwhite ${!isValid &&
-                                                                m.score[0] + m.score[1] > 0
+                                                            className={`w-16 bg-nightcourt border rounded-lg p-2 text-center text-courtwhite ${!isValid && total > 0
                                                                 ? "border-red-500/60"
                                                                 : "border-steelgrey/30"
                                                                 }`}
@@ -273,8 +295,7 @@ export default function TournamentPlayPage() {
                                                             onChange={(e) =>
                                                                 updateScore(m.id, 2, Number(e.target.value))
                                                             }
-                                                            className={`w-16 bg-nightcourt border rounded-lg p-2 text-center text-courtwhite ${!isValid &&
-                                                                m.score[0] + m.score[1] > 0
+                                                            className={`w-16 bg-nightcourt border rounded-lg p-2 text-center text-courtwhite ${!isValid && total > 0
                                                                 ? "border-red-500/60"
                                                                 : "border-steelgrey/30"
                                                                 }`}
@@ -302,7 +323,7 @@ export default function TournamentPlayPage() {
                                         {/* 🔹 Spara/ändra-knapp */}
                                         <div className="text-center">
                                             <button
-                                                onClick={() => saveResult(m)}
+                                                onClick={() => void saveResult(m)}
                                                 className={`px-4 py-2 rounded-lg font-semibold transition ${m.confirmed
                                                     ? "bg-limedark text-nightcourt hover:bg-limecore"
                                                     : isValid

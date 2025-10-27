@@ -1,78 +1,121 @@
+// src/pages/Home.tsx
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
 import CommunityLeaderboard from "../components/CommunityLeaderboard";
 import Tournaments from "../components/Tournaments";
-import { Link } from "react-router-dom";
+
 import { getCommunities, type Community } from "../lib/data/communities";
-import { useEffect, useState } from "react";
-
 import { getRecentTournaments } from "../lib/data/tournaments";
-
 import { calculateTop3 } from "../utils/calculateTop3";
 
+// === Utökad typ för communities på startsidan ===
+type ExtendedCommunity = Community & {
+    tournaments_count?: number;
+    last_played?: string | null;
+};
 
-
-
+type Tournament = {
+    id: string;
+    name: string;
+    date: string;
+    community: string;
+    communitySlug?: string;
+    pointsPerMatch: number;
+    top3?: string[];
+};
 
 export default function Home() {
-    const [communities, setCommunities] = useState<Community[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [communities, setCommunities] = useState<ExtendedCommunity[]>([]);
+    const [tournaments, setTournaments] = useState<Tournament[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [tournaments, setTournaments] = useState([]);
 
-
-
+    // === Hämta gemenskaper ===
     useEffect(() => {
-        getCommunities()
-            .then(setCommunities)
-            .catch((err) => setError(err.message))
-            .finally(() => setLoading(false));
+        const loadCommunities = async (): Promise<void> => {
+            try {
+                const data = await getCommunities();
+                setCommunities(data as ExtendedCommunity[]);
+            } catch (err) {
+                const e = err as Error;
+                setError(e.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        void loadCommunities();
     }, []);
 
-
+    // === Hämta senaste turneringar ===
     useEffect(() => {
-        getRecentTournaments().then(setTournaments).finally(() => setLoading(false));
+        const loadTournaments = async (): Promise<void> => {
+            try {
+                const data = await getRecentTournaments();
+                setTournaments(data as Tournament[]);
+            } catch (err) {
+                console.error("❌ Fel vid hämtning av turneringar:", err);
+            }
+        };
+        void loadTournaments();
     }, []);
 
-
-
-    if (loading)
+    // === Laddning / fel ===
+    if (loading) {
         return (
             <div className="max-w-4xl mx-auto text-steelgrey">
                 Laddar gemenskaper...
             </div>
         );
+    }
 
-    if (error)
+    if (error) {
         return (
             <div className="max-w-4xl mx-auto text-red-400">
                 Fel: {error}
             </div>
         );
+    }
 
-
+    // === Innehåll ===
     return (
         <div className="flex gap-12 flex-col max-w-4xl mx-auto">
             <div>
-                <h1 className="text-4xl font-display text-limecore">Välkommen till LimePoint</h1>
+                <h1 className="text-4xl font-display text-limecore">
+                    Välkommen till LimePoint
+                </h1>
                 <p className="text-aquaserve text-xl mb-8">Americano made simple</p>
-                <p>Skapa, spela och följ dina Americano-turneringar på ett enklare sätt.</p>
-                <p>LimePoint samlar spelare, resultat och gemenskaper på ett ställe — utan krångel, bara padelglädje.</p>
+                <p>
+                    Skapa, spela och följ dina Americano-turneringar på ett enklare sätt.
+                </p>
+                <p>
+                    LimePoint samlar spelare, resultat och gemenskaper på ett ställe —
+                    utan krångel, bara padelglädje.
+                </p>
 
-                <Link className="inline-block mt-8 mb-12 bg-limecore text-nightcourt font-semibold px-6 py-3 rounded-2xl hover:bg-limedark transition max-w-max" to="/tournaments/select-community">Skapa turnering</Link>
-
+                <Link
+                    className="inline-block mt-8 mb-12 bg-limecore text-nightcourt font-semibold px-6 py-3 rounded-2xl hover:bg-limedark transition max-w-max"
+                    to="/tournaments/select-community"
+                >
+                    Skapa turnering
+                </Link>
             </div>
+
+            {/* Gemenskaper / leaderboard */}
             <CommunityLeaderboard
                 data={communities.map((c) => ({
                     id: c.id,
                     name: c.name,
                     slug: c.slug,
-                    tournaments: c.tournaments_count || 0,
+                    tournaments: c.tournaments_count ?? 0,
                     lastPlayed: c.last_played
                         ? new Date(c.last_played).toLocaleDateString("sv-SE")
                         : "-",
                 }))}
             />
-            <Tournaments data={tournaments} showCommunity={true} />
 
+            {/* Senaste turneringar */}
+            <Tournaments data={tournaments} showCommunity={true} />
         </div>
     );
 }
