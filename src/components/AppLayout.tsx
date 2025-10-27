@@ -35,6 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     <Link to="/" className="hover:text-limecore transition">Start</Link>
                     <Link to="/tournaments" className="hover:text-limecore transition">Turneringar</Link>
                     <Link to="/communities" className="hover:text-limecore transition">Gemenskaper</Link>
+                    <Link to="/about" className="hover:text-limecore transition">Om</Link>
                 </nav>
             </header>
 
@@ -44,6 +45,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     <Link to="/" onClick={() => setMenuOpen(false)} className="hover:text-limecore transition">Start</Link>
                     <Link to="/tournaments" onClick={() => setMenuOpen(false)} className="hover:text-limecore transition">Turneringar</Link>
                     <Link to="/communities" onClick={() => setMenuOpen(false)} className="hover:text-limecore transition">Gemenskaper</Link>
+                    <Link to="/about" onClick={() => setMenuOpen(false)} className="hover:text-limecore transition">Om</Link>
                 </div>
             )}
 

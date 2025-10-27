@@ -8,6 +8,7 @@ import CreateTournamentPage from "./pages/CreateTournamentPage";
 import CommunityPage from "./pages/CommunityPage";
 import SelectCommunityPage from "./pages/SelectCommunityPage";
 import TournamentPlayPage from "./pages/TournamentPlayPage";
+import AboutPage from "./pages/AboutPage";
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/tournaments/create" element={<CreateTournamentPage />} />
           <Route path="/tournaments/select-community" element={<SelectCommunityPage />} />
           <Route path="/tournaments/play/:id" element={<TournamentPlayPage />} />
+          <Route path="/about" element={<AboutPage />} />
         </Routes>
 
       </AppLayout>
