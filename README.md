@@ -1,73 +1,113 @@
-# React + TypeScript + Vite
+# 🟢 LimePoint — Americano made simple
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> ⚠️ _Quick & dirty. Vibe-kodat på kvällstid. Inte perfekt — men snabbt, fungerande och spelbart._
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🧩 Om projektet
 
-## React Compiler
+**LimePoint** är en webbaserad plattform för padelturneringar av typen **Americano**.  
+Appen gör det möjligt att skapa gemenskaper, lägga till spelare, generera automatiska spelscheman och rapportera resultat — allt direkt i webbläsaren, utan appar eller Excel-blad.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Detta är ett **personligt experiment i snabb produktutveckling**, byggt med moderna verktyg och med fokus på:
+- **Flöde framför perfektion**  
+- **Funktion framför formell typning**  
+- **En smidig spelupplevelse framför pixel-perfekt design**
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## ⚙️ Teknikstack
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+| Del                  | Teknik / Tjänst                                            | Kommentar                                        |
+| -------------------- | ---------------------------------------------------------- | ------------------------------------------------ |
+| **Frontend**         | [React 18](https://react.dev) + [Vite](https://vitejs.dev) | Modern utvecklingsmiljö med snabb build-pipeline |
+| **Styling**          | [Tailwind CSS](https://tailwindcss.com)                    | Utility-first, dark mode, limegrönt tema         |
+| **Routing**          | [React Router v6](https://reactrouter.com)                 | Klientbaserad navigering                         |
+| **Databas & API**    | [Supabase](https://supabase.com)                           | PostgreSQL med Row Level Security                |
+| **Hosting**          | [Vercel](https://vercel.com)                               | CI/CD, preview deploys och edge-hosting          |
+| **Datamodell**       | `communities` / `players` / `tournaments` / `matches`      | Relationsdatabas med foreign keys                |
+| **State management** | React Hooks (`useState`, `useEffect`, `useMemo`)           | Enkel hook-baserad logik — ingen Redux           |
+| **Utilities**        | TypeScript (non-strict), ESLint, Prettier                  | Grundläggande typning och linting                |
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🚧 Kodstil & filosofi
+
+> LimePoint är **vibe-kodat** – snabbt, iterativt och utan överdrivet typ- eller arkitektur-formaliteter.
+
+- **TypeScript-strict** är **avstängt** (avsiktligt).  
+- Fokus ligger på **funktionalitet, flöde och feedback-loopar**, inte på enterprise-nivåtypning.  
+- Koden är skriven med **klar struktur men hög tolerans för refaktorering**.  
+
+**Målet:** ett fungerande och roligt verktyg för Americano-turneringar.  
+**Icke-mål:** 100% typ-säkerhet, test coverage eller generisk skalbarhet.
+
+---
+
+## 🏗️ Projektstruktur
+
+```
+src/
+├─ components/        # UI-komponenter (Tournaments, Leaderboard, etc.)
+├─ lib/
+│  ├─ supabase.ts     # Supabase-klient
+│  └─ data/           # Datahämtningsmetoder (players, communities, tournaments)
+├─ pages/             # React-routes (Home, Community, Play, Create, etc.)
+├─ utils/             # Americano-logik och hjälpfunktioner
+└─ main.tsx           # Entrypoint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🌍 Deployment
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Miljö              | URL                                                  | Branch                                                       |
+| ------------------ | ---------------------------------------------------- | ------------------------------------------------------------ |
+| **Production**     | [limepoint.vercel.app](https://limepoint.vercel.app) | `main`                                                       |
+| **Preview builds** | unika Vercel-länkar                                  | `feature/*`                                                  |
+| **Database**       | Supabase Cloud                                       | miljövariabler `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` |
+
+**Lokal utveckling**
+```bash
+npm install
+npm run dev
 ```
+
+**Bygg för produktion**
+```bash
+npm run build
+```
+
+---
+
+## 🎾 Funktioner
+
+✅ Skapa gemenskap  
+✅ Lägg till spelare  
+✅ Skapa turnering (4, 8, 12 eller 16 spelare)  
+✅ Automatiskt Americano-schema  
+✅ Inmatning av resultat  
+✅ Poängtabell & ranking  
+
+**Planerade tillägg**
+- 🔸 Matchhistorik per spelare  
+- 🔸 Dark/light-toggle  
+- 🔸 Supabase Auth (inloggning)  
+- 🔸 Publikt API för externa scoreboard-visningar  
+
+---
+
+## 📈 Syfte & lärdomar
+
+LimePoint är byggt som en **praktisk proof-of-concept** i att snabbt få en fungerande helhet i stacken:
+- full CRUD-integration med Supabase,
+- distribuerad på Vercel,
+- semantiskt ren React-struktur utan ramverksöverbyggnad.
+
+Projektet fungerar också som **en övning i balans** mellan _teknisk stringens_ och _produktkänsla_.  
+
+---
+
+## 📄 Licens
+
+MIT © 2025 — _Use, build, refactor and vibe responsibly._
