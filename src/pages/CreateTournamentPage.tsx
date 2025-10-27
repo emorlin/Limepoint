@@ -38,7 +38,7 @@ export default function CreateTournamentPage() {
                     setCommunity(data);
                     const playerNames = (data.players || []).map((p: any) => p.name);
                     setAvailablePlayers(playerNames);
-                    setSelectedPlayers(playerNames);
+                    //    setSelectedPlayers(playerNames);
                 } else {
                     console.error("❌ Kunde inte hitta community med slug:", slugParam);
                 }
@@ -51,6 +51,44 @@ export default function CreateTournamentPage() {
 
         loadCommunity();
     }, [searchParams]);
+
+
+
+
+    // ...
+
+    const handleAddNewPlayer = async () => {
+        const name = newPlayerName.trim();
+        if (!name || !community?.id) return;
+
+        // 🔸 Kolla om spelaren redan finns (case-insensitive)
+        const exists = availablePlayers.some(
+            (p) => p.toLowerCase() === name.toLowerCase()
+        );
+        if (exists) {
+            alert("Spelaren finns redan i listan!");
+            return;
+        }
+
+        // 🔹 Spara i Supabase
+        const { data, error } = await supabase
+            .from("players")
+            .insert([{ name, community_id: community.id }])
+            .select("name");
+
+        if (error) {
+            console.error("❌ Fel vid skapande av spelare:", error);
+            alert("Kunde inte lägga till spelare. Försök igen.");
+            return;
+        }
+
+        // ✅ Uppdatera lokalt
+        const newName = data?.[0]?.name ?? name;
+        setAvailablePlayers((prev) => [...prev, newName]);
+        setSelectedPlayers((prev) => [...prev, newName]);
+        setNewPlayerName("");
+    };
+
 
 
     const handleAddPlayer = (player: string) => {
@@ -242,74 +280,101 @@ export default function CreateTournamentPage() {
                     Välj spelare
                 </h2>
 
-                <div className="relative mb-4 flex gap-2 items-stretch">
-                    <div className="relative flex-1">
-                        <input
-                            list="players"
-                            placeholder="Sök eller lägg till spelare..."
-                            className="w-full bg-nightcourt border border-steelgrey/30 rounded-lg p-3 pr-10 text-courtwhite placeholder-steelgrey appearance-none focus:outline-none focus:border-limecore transition"
-                            value={newPlayerName}
-                            onChange={(e) => setNewPlayerName(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && handleAddOrSelectPlayer()}
-                        />
-                        <datalist id="players">
-                            {availablePlayers.map((p) => (
-                                <option key={p} value={p} />
-                            ))}
-                        </datalist>
+                <div className="grid md:grid-cols-2 gap-8">
+                    {/* --- Tillgängliga spelare --- */}
+                    {/* --- Tillgängliga spelare --- */}
+                    <div>
+                        <h3 className="text-lg font-semibold text-steelgrey mb-2">
+                            Tillgängliga
+                        </h3>
+                        <ul className="bg-nightcourt border border-steelgrey/30 rounded-lg divide-y divide-steelgrey/20 max-h-80 overflow-y-auto">
+                            {availablePlayers.length === 0 && (
+                                <li className="p-3 text-steelgrey text-sm text-center">
+                                    Inga spelare ännu.
+                                </li>
+                            )}
 
-                        <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="w-5 h-5 text-steelgrey"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
+                            {availablePlayers
+                                .slice()
+                                .sort((a, b) => a.localeCompare(b, "sv"))
+                                .map((p) => {
+                                    const isSelected = selectedPlayers.includes(p);
+                                    return (
+                                        <li
+                                            key={p}
+                                            className={`flex items-center justify-between px-3 py-2 hover:bg-limedark/10 transition ${isSelected ? "opacity-70" : ""
+                                                }`}
+                                        >
+                                            <span className="text-courtwhite">{p}</span>
+
+                                            {isSelected ? (
+                                                <span className="text-steelgrey text-sm italic">Tillagd</span>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleAddPlayer(p)}
+                                                    className="text-limecore text-sm font-semibold hover:underline"
+                                                >
+                                                    Lägg till →
+                                                </button>
+                                            )}
+                                        </li>
+                                    );
+                                })}
+                        </ul>
+
+                        {/* ➕ Lägg till ny spelare */}
+                        {/* ➕ Lägg till ny spelare */}
+                        <div className="flex gap-2 mt-4">
+                            <input
+                                type="text"
+                                placeholder="Ny spelare..."
+                                value={newPlayerName}
+                                onChange={(e) => setNewPlayerName(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && handleAddNewPlayer()}
+                                className="flex-1 bg-nightcourt border border-steelgrey/30 rounded-lg p-2 text-courtwhite placeholder-steelgrey focus:outline-none focus:border-limecore transition"
+                            />
+                            <button
+                                onClick={handleAddNewPlayer}
+                                disabled={!newPlayerName.trim()}
+                                className="bg-limecore text-nightcourt font-semibold px-4 rounded-lg hover:bg-limedark transition disabled:opacity-50"
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 9l-7 7-7-7"
-                                />
-                            </svg>
-                        </span>
+                                Lägg till
+                            </button>
+                        </div>
+
                     </div>
 
-                    <button
-                        onClick={handleAddOrSelectPlayer}
-                        disabled={!newPlayerName.trim()}
-                        className="bg-limecore text-nightcourt font-semibold px-4 rounded-lg hover:bg-limedark transition disabled:opacity-50"
-                    >
-                        {availablePlayers.includes(newPlayerName.trim()) ? "Välj" : "Lägg till"}
-                    </button>
-                </div>
 
-                {selectedPlayers.length > 0 && (
-                    <ul className="flex flex-wrap gap-2 mb-4">
-                        {selectedPlayers.map((p) => (
-                            <li
-                                key={p}
-                                className="bg-limecore/20 text-limecore px-3 py-1 rounded-full flex items-center gap-2"
-                            >
-                                {p}
-                                <button
-                                    onClick={() => handleRemovePlayer(p)}
-                                    className="text-courtwhite hover:text-red-400 text-sm"
+                    {/* --- Valda spelare --- */}
+                    <div>
+                        <h3 className="text-lg font-semibold text-steelgrey mb-2">
+                            Valda ({selectedPlayers.length}/{numPlayers})
+                        </h3>
+                        <ul className="bg-nightcourt border border-steelgrey/30 rounded-lg divide-y divide-steelgrey/20 max-h-80 overflow-y-auto">
+                            {selectedPlayers.length === 0 && (
+                                <li className="p-3 text-steelgrey text-sm text-center">
+                                    Inga spelare valda ännu.
+                                </li>
+                            )}
+                            {selectedPlayers.map((p) => (
+                                <li
+                                    key={p}
+                                    className="flex items-center justify-between px-3 py-2 hover:bg-limedark/10 transition"
                                 >
-                                    ✕
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-
-                {selectedPlayers.length < numPlayers && (
-                    <p className="text-sm text-steelgrey text-center">
-                        {selectedPlayers.length} av {numPlayers} tillagda
-                    </p>
-                )}
+                                    <span className="text-aquaserve">{p}</span>
+                                    <button
+                                        onClick={() => handleRemovePlayer(p)}
+                                        className="text-red-400 text-sm font-semibold hover:underline"
+                                    >
+                                        Ta bort ✕
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
             </section>
+
 
             {/* SKAPA */}
             <div className="pt-6 text-center">
