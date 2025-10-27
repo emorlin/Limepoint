@@ -9,7 +9,7 @@ export default {
                 nightcourt: "#0E1A2A", // 🌌 Basfärg / bakgrund
                 courtwhite: "#F7F8F9", // ⚪ Ljus bakgrund / kort
                 aquaserve: "#5CE1E6", // 🌊 Sekundär accent
-                steelgrey: "#6B7280", // ⚙️ Neutral text / ikonfärg
+                steelgrey: "#b3b3b3", // ⚙️ Neutral text / ikonfärg
             },
             fontFamily: {
                 sans: ["Inter", "sans-serif"],

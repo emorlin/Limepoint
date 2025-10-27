@@ -17,17 +17,11 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/tournaments" element={<TournamentsPage />} />
           <Route path="/communities" element={<CommunitiesPage />} />
-
-          {/* 🆕 Enskild turnering */}
+          <Route path="/communities/:slug" element={<CommunityPage />} />
           <Route path="/tournaments/:id" element={<TournamentDetailPage />} />
-          <Route path="/communities/:id" element={<CommunityPage />} />
-
           <Route path="/tournaments/create" element={<CreateTournamentPage />} />
           <Route path="/tournaments/select-community" element={<SelectCommunityPage />} />
-          <Route
-            path="/tournaments/play"
-            element={<TournamentPlayPage key={crypto.randomUUID()} />}
-          />
+          <Route path="/tournaments/play/:id" element={<TournamentPlayPage />} />
         </Routes>
 
       </AppLayout>
