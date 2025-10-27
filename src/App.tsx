@@ -24,7 +24,6 @@ export default function App() {
           <Route path="/tournaments/select-community" element={<SelectCommunityPage />} />
           <Route path="/tournaments/play/:id" element={<TournamentPlayPage />} />
         </Routes>
-        <SupabaseTest />
       </AppLayout>
     </BrowserRouter>
   );

@@ -33,13 +33,9 @@ export default function CommunityLeaderboard({ data }: { data: any[] }) {
                         </div>
 
                         <div className="flex items-center gap-6 pl-10 pt-1 sm:pt-0 sm:pl-0 text-sm text-steelgrey">
+
                             <span className="text-aquaserve font-medium">
                                 {c.tournaments} turneringar
-                            </span>
-                            <span>
-                                {c.lastPlayed
-                                    ? new Date(c.lastPlayed).toLocaleDateString("sv-SE")
-                                    : "–"}
                             </span>
                         </div>
                     </li>

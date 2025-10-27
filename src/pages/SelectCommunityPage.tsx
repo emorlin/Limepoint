@@ -1,27 +1,82 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 
-const communities = [
-    { id: 1, name: "Sublime Slayers", createdAt: "2025-09-01" },
-    { id: 2, name: "Södermalm Smashers", createdAt: "2025-08-14" },
-];
+type Community = {
+    id: string;
+    name: string;
+    slug: string;
+    created_at: string;
+};
 
 export default function SelectCommunityPage() {
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState<"existing" | "new">("existing");
-    const [selectedCommunityId, setSelectedCommunityId] = useState<number | null>(
-        null
-    );
+    const [communities, setCommunities] = useState<Community[]>([]);
+    const [selectedSlug, setSelectedSlug] = useState<string>("");
     const [newCommunityName, setNewCommunityName] = useState("");
+    const [loading, setLoading] = useState(true);
+
+    // === Hämta alla gemenskaper ===
+    useEffect(() => {
+        async function loadCommunities() {
+            const { data, error } = await supabase
+                .from("communities")
+                .select("id, name, slug, created_at")
+                .order("created_at", { ascending: false });
+
+            if (error) {
+                console.error("❌ Fel vid hämtning av gemenskaper:", error);
+            } else {
+                setCommunities(data || []);
+            }
+            setLoading(false);
+        }
+        loadCommunities();
+    }, []);
+
+    // === Skapa ny gemenskap ===
+    const handleCreateCommunity = async () => {
+        const name = newCommunityName.trim();
+        if (!name) return;
+
+        // skapa slug baserat på namnet
+        const slug = name
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9-]/g, "");
+
+        const { data, error } = await supabase
+            .from("communities")
+            .insert({ name, slug })
+            .select("slug")
+            .single();
+
+        if (error) {
+            console.error("❌ Kunde inte skapa gemenskap:", error);
+            alert("Kunde inte skapa gemenskap. Kanske finns namnet redan?");
+            return;
+        }
+
+        navigate(`/tournaments/create?slug=${data.slug}`);
+    };
 
     const handleContinue = () => {
-        if (activeTab === "existing" && selectedCommunityId) {
-            navigate(`/tournaments/create?community=${selectedCommunityId}`);
+        if (activeTab === "existing" && selectedSlug) {
+            navigate(`/tournaments/create?slug=${selectedSlug}`);
         } else if (activeTab === "new" && newCommunityName.trim()) {
-            navigate(`/tournaments/create?newCommunity=${encodeURIComponent(newCommunityName.trim())}`);
+            handleCreateCommunity();
         }
     };
+
+    if (loading) {
+        return (
+            <div className="max-w-2xl mx-auto text-center py-20 text-steelgrey">
+                Laddar gemenskaper...
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-2xl mx-auto flex flex-col gap-10">
@@ -56,7 +111,7 @@ export default function SelectCommunityPage() {
                 </button>
             </div>
 
-            {/* Flik 1 — Befintlig */}
+            {/* Befintlig gemenskap */}
             {activeTab === "existing" && (
                 <section>
                     <label className="block text-courtwhite font-semibold mb-2">
@@ -64,22 +119,22 @@ export default function SelectCommunityPage() {
                     </label>
                     <select
                         className="w-full bg-nightcourt border border-steelgrey/30 rounded-lg p-3 text-courtwhite"
-                        onChange={(e) => setSelectedCommunityId(Number(e.target.value))}
+                        onChange={(e) => setSelectedSlug(e.target.value)}
                         defaultValue=""
                     >
                         <option value="" disabled>
                             -- Välj --
                         </option>
                         {communities.map((c) => (
-                            <option key={c.id} value={c.id}>
-                                {c.name} ({new Date(c.createdAt).toLocaleDateString("sv-SE")})
+                            <option key={c.id} value={c.slug}>
+                                {c.name}
                             </option>
                         ))}
                     </select>
                 </section>
             )}
 
-            {/* Flik 2 — Ny */}
+            {/* Ny gemenskap */}
             {activeTab === "new" && (
                 <section>
                     <label className="block text-courtwhite font-semibold mb-2">
@@ -100,7 +155,7 @@ export default function SelectCommunityPage() {
                 <button
                     className="bg-limecore text-nightcourt font-semibold px-6 py-3 rounded-xl hover:bg-limedark transition disabled:opacity-50"
                     disabled={
-                        (activeTab === "existing" && !selectedCommunityId) ||
+                        (activeTab === "existing" && !selectedSlug) ||
                         (activeTab === "new" && !newCommunityName.trim())
                     }
                     onClick={handleContinue}
