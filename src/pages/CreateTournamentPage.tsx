@@ -239,7 +239,7 @@ export default function CreateTournamentPage() {
                     <div className="mb-4">
                         <label
                             htmlFor="numPlayers"
-                            className="block text-steelgrey text-sm font-medium mb-1"
+                            className="block text-courtwhite font-semibold mb-2"
                         >
                             Antal spelare
                         </label>
@@ -284,7 +284,7 @@ export default function CreateTournamentPage() {
                     {/* --- Tillgängliga spelare --- */}
                     {/* --- Tillgängliga spelare --- */}
                     <div>
-                        <h3 className="text-lg font-semibold text-steelgrey mb-2">
+                        <h3 className="block text-courtwhite font-semibold mb-2">
                             Tillgängliga
                         </h3>
                         <ul className="bg-nightcourt border border-steelgrey/30 rounded-lg divide-y divide-steelgrey/20 max-h-80 overflow-y-auto">
@@ -347,7 +347,7 @@ export default function CreateTournamentPage() {
 
                     {/* --- Valda spelare --- */}
                     <div>
-                        <h3 className="text-lg font-semibold text-steelgrey mb-2">
+                        <h3 className="block text-courtwhite font-semibold mb-2">
                             Valda ({selectedPlayers.length}/{numPlayers})
                         </h3>
                         <ul className="bg-nightcourt border border-steelgrey/30 rounded-lg divide-y divide-steelgrey/20 max-h-80 overflow-y-auto">
