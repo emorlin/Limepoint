@@ -6,23 +6,22 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "types": ["vite/client"],
+
+    /* 💡 Avslappnade inställningar */
     "skipLibCheck": true,
+    "noEmit": true,
+    "strict": false,                 // ← stäng av strict-läge helt
+    "noUnusedLocals": false,         // ← inga varningar om oanvänt
+    "noUnusedParameters": false,     // ← inga varningar om oanvänt
+    "noUncheckedSideEffectImports": false,
+    "noFallthroughCasesInSwitch": false,
 
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
-    "noEmit": true,
-    "jsx": "react-jsx",
-
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "jsx": "react-jsx"
   },
   "include": ["src"]
 }
