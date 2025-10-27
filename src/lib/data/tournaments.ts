@@ -87,3 +87,107 @@ export async function getRecentTournaments(limit = 5) {
 
     return formatted;
 }
+
+// 🆕 Skapa en ny turnering i Supabase
+export async function createTournament({
+    name,
+    communityId,
+    pointsPerMatch,
+}: {
+    name: string;
+    communityId: string;
+    pointsPerMatch: number;
+}) {
+    const { data, error } = await supabase
+        .from("tournaments")
+        .insert([
+            {
+                name,
+                community_id: communityId,
+                points_per_match: pointsPerMatch,
+            },
+        ])
+        .select()
+        .single();
+
+    if (error) {
+        console.error("❌ Fel vid skapande av turnering:", error);
+        throw error;
+    }
+
+    return data;
+}
+
+// 🆕 Kontrollera att spelaren finns, skapa annars ny
+export async function ensurePlayer(name: string, communityId: string) {
+    const { data: existing } = await supabase
+        .from("players")
+        .select("id")
+        .eq("name", name)
+        .eq("community_id", communityId)
+        .maybeSingle();
+
+    if (existing) return existing.id;
+
+    const { data, error } = await supabase
+        .from("players")
+        .insert([{ name, community_id: communityId }])
+        .select()
+        .single();
+
+    if (error) {
+        console.error("❌ Fel vid skapande av spelare:", error);
+        throw error;
+    }
+
+    return data.id;
+}
+
+// === Hämta turnering med matcher och spelare ===
+export async function getTournamentById(id: string) {
+    const { data, error } = await supabase
+        .from("tournaments")
+        .select(
+            `
+      id,
+      name,
+      points_per_match,
+      communities ( name, slug ),
+      matches (
+        id,
+        round,
+        score1,
+        score2,
+        team1_player1:team1_player1 ( id, name ),
+        team1_player2:team1_player2 ( id, name ),
+        team2_player1:team2_player1 ( id, name ),
+        team2_player2:team2_player2 ( id, name )
+      )
+    `
+        )
+        .eq("id", id)
+        .maybeSingle();
+
+    if (error) {
+        console.error("❌ Fel vid hämtning av turnering:", error);
+        return null;
+    }
+
+    // normalisera
+    const matches = (data.matches || []).map((m: any) => ({
+        id: m.id,
+        round: m.round,
+        team1: [m.team1_player1?.name, m.team1_player2?.name].filter(Boolean),
+        team2: [m.team2_player1?.name, m.team2_player2?.name].filter(Boolean),
+        score: [m.score1 ?? 0, m.score2 ?? 0],
+        confirmed: m.score1 + m.score2 > 0,
+    }));
+
+    return {
+        id: data.id,
+        name: data.name,
+        community: data.communities?.name,
+        pointsPerMatch: data.points_per_match,
+        matches,
+    };
+}

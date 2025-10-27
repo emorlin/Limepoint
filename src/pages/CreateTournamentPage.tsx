@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { fetchCommunityBySlug } from "../lib/data/communities";
+import { createTournament, ensurePlayer } from "../lib/data/tournaments";
+import { generateAmericanoMatches } from "../utils/americano";
+import { supabase } from "../lib/supabase";
+
 
 export default function CreateTournamentPage() {
     const [searchParams] = useSearchParams();
@@ -17,21 +21,26 @@ export default function CreateTournamentPage() {
     const [newPlayerName, setNewPlayerName] = useState("");
     const navigate = useNavigate();
 
-    // 🔹 Hämta community-data från Supabase
     useEffect(() => {
         async function loadCommunity() {
-            if (!slug && !newCommunityName) {
+            // 🔹 tillåt både ?community=slug och ?slug=slug
+            const slugParam = searchParams.get("slug") || searchParams.get("community");
+            const newCommunityName = searchParams.get("newCommunity");
+
+            if (!slugParam && !newCommunityName) {
                 setLoading(false);
                 return;
             }
 
-            if (slug) {
-                const data = await fetchCommunityBySlug(slug);
+            if (slugParam) {
+                const data = await fetchCommunityBySlug(slugParam);
                 if (data) {
                     setCommunity(data);
                     const playerNames = (data.players || []).map((p: any) => p.name);
                     setAvailablePlayers(playerNames);
                     setSelectedPlayers(playerNames);
+                } else {
+                    console.error("❌ Kunde inte hitta community med slug:", slugParam);
                 }
             } else if (newCommunityName) {
                 setCommunity({ id: null, name: newCommunityName, players: [] });
@@ -41,7 +50,8 @@ export default function CreateTournamentPage() {
         }
 
         loadCommunity();
-    }, [slug, newCommunityName]);
+    }, [searchParams]);
+
 
     const handleAddPlayer = (player: string) => {
         if (player && !selectedPlayers.includes(player)) {
@@ -67,19 +77,75 @@ export default function CreateTournamentPage() {
         setNewPlayerName("");
     };
 
-    const handleCreate = () => {
-        navigate("/tournaments/play", {
-            state: {
-                tournamentName,
-                community: community?.name,
-                slug: community?.slug,
-                players: selectedPlayers,
+    const handleCreate = async () => {
+        if (!community) return;
+        if (!community.id) {
+            alert("Gemenskapen saknar ID – något gick fel.");
+            return;
+        }
+
+        if (![4, 8, 12, 16].includes(numPlayers)) {
+            alert("Endast 4, 8, 12 eller 16 spelare stöds för Americano just nu.");
+            return;
+        }
+
+        try {
+            // 🔹 1. Skapa turneringen i Supabase
+            const tournament = await createTournament({
+                name: tournamentName.trim(),
+                communityId: community.id,
                 pointsPerMatch,
-            },
-        });
+            });
+
+            console.log("✅ Turnering skapad:", tournament.id);
+
+            // 🔹 2. Kontrollera att alla spelare finns (eller skapa dem)
+            const playerIds: string[] = [];
+            for (const name of selectedPlayers) {
+                const playerId = await ensurePlayer(name, community.id);
+                playerIds.push(playerId);
+            }
+
+            console.log("✅ Spelare:", playerIds);
+
+            // 🔹 3. Generera matcher via Americano-schema
+            const matches = generateAmericanoMatches(playerIds);
+
+            console.log("✅ Matcher genererade:", matches.length);
+
+            // 🔹 4. Spara matcherna i Supabase
+            const { error: matchError } = await supabase
+                .from("matches")
+                .insert(
+                    matches.map((m) => ({
+                        tournament_id: tournament.id,
+                        round: m.round,
+                        team1_player1: m.team1_player1,
+                        team1_player2: m.team1_player2,
+                        team2_player1: m.team2_player1,
+                        team2_player2: m.team2_player2,
+                        score1: m.score1,
+                        score2: m.score2,
+                    }))
+                );
+
+            if (matchError) throw matchError;
+
+            console.log("✅ Matcher sparade i databasen!");
+
+            // 🔹 5. Navigera till turneringssidan
+            navigate(`/tournaments/play/${tournament.id}`);
+        } catch (err) {
+            console.error("❌ Fel vid skapande av turnering:", err);
+            alert("Något gick fel vid skapande av turneringen.");
+        }
     };
 
-    const canCreate = tournamentName.trim().length > 0 && selectedPlayers.length === numPlayers;
+
+    const canCreate =
+        tournamentName.trim().length > 0 &&
+        [4, 8, 12, 16].includes(numPlayers) &&
+        selectedPlayers.length === numPlayers;
 
     if (loading) {
         return (

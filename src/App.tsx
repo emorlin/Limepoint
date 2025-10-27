@@ -22,10 +22,7 @@ export default function App() {
           <Route path="/tournaments/:id" element={<TournamentDetailPage />} />
           <Route path="/tournaments/create" element={<CreateTournamentPage />} />
           <Route path="/tournaments/select-community" element={<SelectCommunityPage />} />
-          <Route
-            path="/tournaments/play"
-            element={<TournamentPlayPage key={crypto.randomUUID()} />}
-          />
+          <Route path="/tournaments/play/:id" element={<TournamentPlayPage />} />
         </Routes>
         <SupabaseTest />
       </AppLayout>

@@ -1,12 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-
-type TournamentData = {
-    tournamentName: string;
-    community: string;
-    players: string[];
-    pointsPerMatch: number;
-};
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { supabase } from "../lib/supabase";
+import { getTournamentById } from "../lib/data/tournaments";
 
 type Match = {
     id: string;
@@ -17,80 +12,42 @@ type Match = {
     confirmed?: boolean;
 };
 
-// En enkel shuffle
-const shuffle = <T,>(arr: T[]): T[] => {
-    const copy = [...arr];
-    for (let i = copy.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy;
-};
-
-// Genererar Americano-schema (2 matcher per runda vid 8 spelare)
-const generateAmericanoMatches = (players: string[]): Match[] => {
-    const n = players.length;
-    if (n % 4 !== 0) return [];
-
-    const shuffled = shuffle(players);
-    const rounds = n - 1;
-    const allMatches: Match[] = [];
-
-    for (let r = 1; r <= rounds; r++) {
-        for (let i = 0; i < n; i += 4) {
-            const block = shuffled.slice(i, i + 4);
-            if (block.length === 4) {
-                allMatches.push({
-                    id: `${r}-${i}`,
-                    round: r,
-                    team1: [block[0], block[1]],
-                    team2: [block[2], block[3]],
-                    score: [0, 0],
-                    confirmed: false,
-                });
-            }
-        }
-        // enkel rotation
-        //  const fixed = shuffled[0];
-        const rest = shuffled.slice(1);
-        shuffled.splice(1, n - 1, ...rest.slice(-1), ...rest.slice(0, -1));
-    }
-
-    return allMatches;
-};
-
 export default function TournamentPlayPage() {
+    const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const data = location.state as TournamentData | null;
+    const localData = location.state as any;
 
+    const [tournament, setTournament] = useState<any | null>(null);
     const [matches, setMatches] = useState<Match[]>([]);
     const [activeTab, setActiveTab] = useState<"schema" | "tabell">("schema");
     const [activeRound, setActiveRound] = useState(1);
+    const [loading, setLoading] = useState(true);
 
-    // initiera turnering
+    // === Hämta turnering ===
     useEffect(() => {
-        if (!data) {
-            navigate("/tournaments/create");
-            return;
+        async function load() {
+            if (localData?.tournamentName) {
+                // 🔹 Ny turnering via CreateTournamentPage
+                setTournament(localData);
+                setMatches(localData.matches || []);
+                setLoading(false);
+            } else if (id) {
+                // 🔹 Hämta från Supabase
+                const data = await getTournamentById(id);
+                if (data) {
+                    setTournament(data);
+                    setMatches(data.matches);
+                }
+                setLoading(false);
+            } else {
+                navigate("/tournaments");
+            }
         }
-        const newMatches = generateAmericanoMatches(data.players);
-        setMatches(newMatches);
-    }, [data, navigate]);
+        load();
+    }, [id, navigate]);
 
-    if (!data) return null;
-    const { tournamentName, community, players, pointsPerMatch } = data;
-
-    // gruppera per runda
-    const rounds = useMemo(() => {
-        return matches.reduce((acc: Record<number, Match[]>, m) => {
-            acc[m.round] = acc[m.round] || [];
-            acc[m.round].push(m);
-            return acc;
-        }, {});
-    }, [matches]);
-
-    // uppdatera resultat
+    // === Uppdatera resultat lokalt ===
     const updateScore = (id: string, team: 1 | 2, value: number) => {
         setMatches((prev) =>
             prev.map((m) =>
@@ -104,8 +61,27 @@ export default function TournamentPlayPage() {
         );
     };
 
-    // beräkna tabellstatistik (endast confirmed matcher)
+    // === Gruppera per runda ===
+    const rounds = useMemo(() => {
+        return matches.reduce((acc: Record<number, Match[]>, m) => {
+            acc[m.round] = acc[m.round] || [];
+            acc[m.round].push(m);
+            return acc;
+        }, {});
+    }, [matches]);
+
+    // === Beräkna tabell (endast confirmed matcher) ===
     const stats = useMemo(() => {
+        if (!tournament?.players && matches.length === 0) return [];
+
+        const players =
+            tournament?.players ||
+            Array.from(
+                new Set(
+                    matches.flatMap((m) => [...m.team1, ...m.team2]).filter(Boolean)
+                )
+            );
+
         return players.map((player) => {
             let games = 0;
             let wins = 0;
@@ -113,7 +89,7 @@ export default function TournamentPlayPage() {
             let totalPoints = 0;
 
             matches.forEach(({ team1, team2, score, confirmed }) => {
-                if (!confirmed) return; // hoppa över ej sparade matcher
+                if (!confirmed) return;
                 const [s1, s2] = score;
                 const isTeam1 = team1.includes(player);
                 const isTeam2 = team2.includes(player);
@@ -129,7 +105,7 @@ export default function TournamentPlayPage() {
 
             return { name: player, games, wins, pd, points: totalPoints };
         });
-    }, [matches, players]);
+    }, [matches, tournament]);
 
     const sorted = [...stats].sort((a, b) => {
         if (b.points !== a.points) return b.points - a.points;
@@ -137,19 +113,62 @@ export default function TournamentPlayPage() {
         return b.wins - a.wins;
     });
 
+    // === Spara resultat ===
+    const saveResult = async (match: Match) => {
+        const total = match.score[0] + match.score[1];
+        if (total !== tournament.pointsPerMatch)
+            return alert(
+                `Summan måste bli exakt ${tournament.pointsPerMatch} poäng.`
+            );
+
+        const { error } = await supabase
+            .from("matches")
+            .update({
+                score1: match.score[0],
+                score2: match.score[1],
+            })
+            .eq("id", match.id);
+
+        if (error) {
+            console.error("❌ Fel vid sparande:", error);
+            alert("Kunde inte spara resultatet.");
+            return;
+        }
+
+        setMatches((prev) =>
+            prev.map((m) =>
+                m.id === match.id ? { ...m, confirmed: !m.confirmed } : m
+            )
+        );
+    };
+
+    if (loading)
+        return (
+            <div className="max-w-4xl mx-auto text-center py-20 text-steelgrey">
+                Laddar turnering...
+            </div>
+        );
+
+    if (!tournament)
+        return (
+            <div className="max-w-4xl mx-auto text-center py-20 text-red-400">
+                Kunde inte hitta turnering.
+            </div>
+        );
+
+    const { name, community, pointsPerMatch } = tournament;
+
     return (
         <div className="max-w-4xl mx-auto flex flex-col gap-10">
-            {/* === HEADER === */}
+            {/* HEADER */}
             <header>
-                <h1 className="text-4xl font-display text-limecore mb-2">
-                    {tournamentName}
-                </h1>
+                <h1 className="text-4xl font-display text-limecore mb-2">{name}</h1>
                 <p className="text-aquaserve text-lg">
                     {community} • {new Date().toLocaleDateString("sv-SE")}
                 </p>
             </header>
 
-            {/* === TABS === */}
+            {/* TABS */}
             <div className="flex justify-center border-b border-steelgrey/40 mb-4">
                 <button
                     onClick={() => setActiveTab("schema")}
@@ -174,7 +193,6 @@ export default function TournamentPlayPage() {
             {/* === SCHEMA === */}
             {activeTab === "schema" && (
                 <>
-                    {/* RUNDA-KNAPPAR */}
                     <nav className="flex justify-center gap-2 mb-6 flex-wrap">
                         {Object.keys(rounds).map((num) => (
                             <button
@@ -190,7 +208,6 @@ export default function TournamentPlayPage() {
                         ))}
                     </nav>
 
-                    {/* RUNDA */}
                     <section>
                         <h2 className="text-2xl font-semibold text-courtwhite mb-4 text-center">
                             Omgång {activeRound}
@@ -203,12 +220,10 @@ export default function TournamentPlayPage() {
 
                                 return (
                                     <div key={m.id} className="space-y-3">
-                                        {/* MATCHRAD */}
                                         <div
                                             className={`flex items-top sm:items-center justify-center gap-6 border rounded-2xl p-4 transition ${m.confirmed
                                                 ? "bg-nightcourt border-limecore/40"
-                                                : !isValid &&
-                                                    (m.score[0] > 0 || m.score[1] > 0)
+                                                : !isValid && (m.score[0] > 0 || m.score[1] > 0)
                                                     ? "bg-nightcourt border-red-500/50"
                                                     : "bg-nightcourt border-steelgrey/20"
                                                 }`}
@@ -243,7 +258,8 @@ export default function TournamentPlayPage() {
                                                             onChange={(e) =>
                                                                 updateScore(m.id, 1, Number(e.target.value))
                                                             }
-                                                            className={`w-16 bg-nightcourt border rounded-lg p-2 text-center text-courtwhite ${!isValid && m.score[0] + m.score[1] > 0
+                                                            className={`w-16 bg-nightcourt border rounded-lg p-2 text-center text-courtwhite ${!isValid &&
+                                                                m.score[0] + m.score[1] > 0
                                                                 ? "border-red-500/60"
                                                                 : "border-steelgrey/30"
                                                                 }`}
@@ -257,7 +273,8 @@ export default function TournamentPlayPage() {
                                                             onChange={(e) =>
                                                                 updateScore(m.id, 2, Number(e.target.value))
                                                             }
-                                                            className={`w-16 bg-nightcourt border rounded-lg p-2 text-center text-courtwhite ${!isValid && m.score[0] + m.score[1] > 0
+                                                            className={`w-16 bg-nightcourt border rounded-lg p-2 text-center text-courtwhite ${!isValid &&
+                                                                m.score[0] + m.score[1] > 0
                                                                 ? "border-red-500/60"
                                                                 : "border-steelgrey/30"
                                                                 }`}
@@ -270,7 +287,7 @@ export default function TournamentPlayPage() {
                                             </div>
 
                                             {/* Lag 2 */}
-                                            <div className="flex flex-col sm:items-start items-end  w-1/3 text-left">
+                                            <div className="flex flex-col sm:items-start items-end w-1/3 text-left">
                                                 {m.team2.map((p) => (
                                                     <span
                                                         key={p}
@@ -282,23 +299,10 @@ export default function TournamentPlayPage() {
                                             </div>
                                         </div>
 
-                                        {/* 🔹 Spara / Ändra-knapp */}
+                                        {/* 🔹 Spara/ändra-knapp */}
                                         <div className="text-center">
                                             <button
-                                                onClick={() => {
-                                                    if (!isValid)
-                                                        return alert(
-                                                            "Summan av poängen måste bli exakt " +
-                                                            pointsPerMatch
-                                                        );
-                                                    setMatches((prev) =>
-                                                        prev.map((match) =>
-                                                            match.id === m.id
-                                                                ? { ...match, confirmed: !match.confirmed }
-                                                                : match
-                                                        )
-                                                    );
-                                                }}
+                                                onClick={() => saveResult(m)}
                                                 className={`px-4 py-2 rounded-lg font-semibold transition ${m.confirmed
                                                     ? "bg-limedark text-nightcourt hover:bg-limecore"
                                                     : isValid
@@ -306,11 +310,6 @@ export default function TournamentPlayPage() {
                                                         : "bg-steelgrey text-nightcourt opacity-50 cursor-not-allowed"
                                                     }`}
                                                 disabled={!isValid && !m.confirmed}
-                                                title={
-                                                    !isValid
-                                                        ? `Summan (${total}) måste vara ${pointsPerMatch}`
-                                                        : ""
-                                                }
                                             >
                                                 {m.confirmed ? "Ändra resultat" : "Spara resultat"}
                                             </button>
