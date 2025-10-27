@@ -85,26 +85,28 @@ export async function getCommunityById(id: string) {
 
 // === Hämta community via slug (för /communities/:slug) ===
 export async function fetchCommunityBySlug(slug: string) {
-    console.log("Hämtar community via slug:", slug);
+    console.log("🔍 Hämtar community via slug:", slug);
+
     const { data, error } = await supabase
         .from("communities")
         .select(
             `
-      id,
-      name,
-      slug,
-      created_at,
-      players ( id, name ),
-      tournaments ( id, name, created_at )
-    `
+            id,
+            name,
+            slug,
+            created_at,
+            players ( id, name, created_at ),
+            tournaments ( id, name, points_per_match, created_at )
+        `
         )
         .eq("slug", slug)
         .maybeSingle();
 
     if (error) {
-        console.error("❌ Fel vid hämtning av community via slug:", error);
+        console.error("❌ Fel vid hämtning av community via slug:", error.message);
         return null;
     }
 
+    console.log("✅ Hämtad community:", data);
     return data;
 }

@@ -40,6 +40,8 @@ export default function CommunitiesPage() {
                 En ny gemenskap skapar du samtidigt som du skapar en turnering.
             </p>
 
+
+
             <CommunityLeaderboard
                 data={communities.map((c) => ({
                     id: c.id,

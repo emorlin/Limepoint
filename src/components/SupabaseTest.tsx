@@ -13,7 +13,7 @@ export default function SupabaseTest() {
                 const { data, error } = await supabase
                     .from("communities")
                     .select("*")
-                    .limit(5);
+                    .limit(50);
 
                 if (error) throw error;
                 setData(data || []);

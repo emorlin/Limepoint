@@ -4,34 +4,21 @@ import { Link } from "react-router-dom";
 import { getCommunities, type Community } from "../lib/data/communities";
 import { useEffect, useState } from "react";
 
-const tournaments = [
-    {
-        id: 1,
-        name: "Fredagspadel #23",
-        community: "Sublime Slayers",
-        top3: ["Erik", "Tomas", "Mathias"],
-        date: "2025-10-12",
-    },
-    {
-        id: 2,
-        name: "Fredag Americano",
-        community: "Södermalm Smashers",
-        top3: ["Anna", "Jonas", "Micke"],
-        date: "2025-10-10",
-    },
-    {
-        id: 3,
-        name: "Västerås Open",
-        community: "Västerås Vibes",
-        top3: ["Karin", "Erik", "Alex"],
-        date: "2025-10-08",
-    },
-];
+import { getRecentTournaments } from "../lib/data/tournaments";
+
+import { calculateTop3 } from "../utils/calculateTop3";
+
+
+
+
 
 export default function Home() {
     const [communities, setCommunities] = useState<Community[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [tournaments, setTournaments] = useState([]);
+
+
 
     useEffect(() => {
         getCommunities()
@@ -39,6 +26,12 @@ export default function Home() {
             .catch((err) => setError(err.message))
             .finally(() => setLoading(false));
     }, []);
+
+
+    useEffect(() => {
+        getRecentTournaments().then(setTournaments).finally(() => setLoading(false));
+    }, []);
+
 
 
     if (loading)
@@ -78,7 +71,8 @@ export default function Home() {
                         : "-",
                 }))}
             />
-            <Tournaments data={tournaments} />
+            <Tournaments data={tournaments} showCommunity={true} />
+
         </div>
     );
 }

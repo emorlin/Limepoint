@@ -9,6 +9,7 @@ import CommunityPage from "./pages/CommunityPage";
 import SelectCommunityPage from "./pages/SelectCommunityPage";
 import TournamentPlayPage from "./pages/TournamentPlayPage";
 import SupabaseTest from "./components/SupabaseTest";
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -16,12 +17,9 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/tournaments" element={<TournamentsPage />} />
+          <Route path="/communities" element={<CommunitiesPage />} />
           <Route path="/communities/:slug" element={<CommunityPage />} />
-
-          {/* 🆕 Enskild turnering */}
           <Route path="/tournaments/:id" element={<TournamentDetailPage />} />
-          <Route path="/communities/:id" element={<CommunityPage />} />
-
           <Route path="/tournaments/create" element={<CreateTournamentPage />} />
           <Route path="/tournaments/select-community" element={<SelectCommunityPage />} />
           <Route

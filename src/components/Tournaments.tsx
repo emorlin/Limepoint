@@ -6,12 +6,13 @@ type Props = {
 };
 
 export default function Tournaments({ data, showCommunity = true }: Props) {
+    console.log("Tournaments data:", data);
     return (
         <section className="bg-nightcourt rounded-2xl p-6 shadow-lg border border-steelgrey/20">
             <div className="flex items-center gap-2 mb-6">
                 <Calendar className="text-limecore w-6 h-6" />
                 <h2 className="text-xl font-display font-bold text-courtwhite">
-                    Senaste turneringar
+                    Senaste turneringarna
                 </h2>
             </div>
 
@@ -46,27 +47,28 @@ export default function Tournaments({ data, showCommunity = true }: Props) {
                                     </td>
                                 )}
                                 {t.top3 && (
-                                    <td className="py-3 text-aquaserve text-sm whitespace-nowrap  pr-4">
-                                        {t.top3.map((player: string, i: number) => {
+                                    <td className="py-3 text-aquaserve text-sm whitespace-nowrap pr-4">
+                                        {t.top3.map((player: any, i: number) => {
                                             const medalColors = [
                                                 "text-yellow-400",
                                                 "text-gray-300",
                                                 "text-amber-600",
                                             ];
+                                            const name =
+                                                typeof player === "string"
+                                                    ? player
+                                                    : player?.name?.name || player?.name || player?.player_name || "Okänd";
                                             return (
-                                                <span
-                                                    key={i}
-                                                    className="mr-4 flex items-center inline-flex"
-                                                >
+                                                <span key={i} className="mr-4 flex items-center inline-flex">
                                                     <span className={`${medalColors[i]} mr-1`}>
                                                         {["🥇", "🥈", "🥉"][i]}
                                                     </span>
-                                                    <span className="text-aquaserve">{player}</span>
+                                                    <span className="text-aquaserve">{name}</span>
                                                 </span>
                                             );
                                         })}
-                                    </td>)}
-                                <td></td>
+                                    </td>
+                                )}
                                 <td className="py-3 text-right text-steelgrey whitespace-nowrap">
                                     {new Date(t.date).toLocaleDateString("sv-SE", {
                                         day: "2-digit",

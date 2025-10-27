@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Tournaments from "../components/Tournaments";
 import { fetchCommunityBySlug } from "../lib/data/communities";
-
+import { getRecentTournaments } from "../lib/data/tournaments";
 
 type Community = {
     id: number;
@@ -18,6 +18,9 @@ export default function CommunityPage() {
     const [community, setCommunity] = useState<Community | null>(null);
     const [loading, setLoading] = useState(true);
 
+
+    const [error, setError] = useState<string | null>(null);
+    const [tournaments, setTournaments] = useState([]);
 
     useEffect(() => {
         console.log("Slug från URL:", slug);
@@ -36,13 +39,26 @@ export default function CommunityPage() {
         loadCommunity();
     }, [slug]);
 
-    if (loading) {
+    useEffect(() => {
+        getRecentTournaments().then(setTournaments).finally(() => setLoading(false));
+    }, []);
+
+    if (loading)
         return (
-            <div className="max-w-4xl mx-auto text-center mt-10 text-steelgrey">
-                <p>Laddar gemenskap...</p>
+            <div className="max-w-4xl mx-auto text-steelgrey">
+                Laddar gemenskaper...
             </div>
         );
-    }
+
+    if (error)
+        return (
+            <div className="max-w-4xl mx-auto text-red-400">
+                Fel: {error}
+            </div>
+        );
+
+
+
 
     if (!community) {
         return (
@@ -55,7 +71,7 @@ export default function CommunityPage() {
         );
     }
 
-    const tournaments = community.tournaments || [];
+
 
     return (
         <div className="max-w-4xl mx-auto flex flex-col gap-10">
@@ -83,7 +99,9 @@ export default function CommunityPage() {
             {/* === TURNERINGAR === */}
             <section>
                 {tournaments.length > 0 ? (
+
                     <Tournaments data={tournaments} showCommunity={false} />
+
                 ) : (
                     <p className="text-steelgrey italic">
                         Inga turneringar spelade ännu.
