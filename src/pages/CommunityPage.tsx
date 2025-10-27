@@ -4,6 +4,7 @@ import Tournaments from "../components/Tournaments";
 import { fetchCommunityBySlug } from "../lib/data/communities";
 import { getTournamentsByCommunity } from "../lib/data/tournaments";
 import { fetchPlayersByCommunity, deactivatePlayer } from "../lib/data/players";
+import CommunityMedalLeague from "../components/CommunityMedalLeague";
 
 // === Typer ===
 type Player = {
@@ -181,6 +182,13 @@ export default function CommunityPage() {
                 )}
             </section>
 
+            {/* === Medaljliga === */}
+
+            {/* rubrik, beskrivning, turneringar etc. */}
+
+            <CommunityMedalLeague community={slug} />
+
+
             {/* === SPELARE === */}
             <section className="bg-nightcourt rounded-2xl p-6 shadow-lg border border-steelgrey/20">
                 <h2 className="text-2xl font-display font-bold text-limecore mb-4">
@@ -217,6 +225,7 @@ export default function CommunityPage() {
                     </ul>
                 )}
             </section>
+
         </div>
     );
 }
