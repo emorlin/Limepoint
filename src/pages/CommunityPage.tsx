@@ -5,7 +5,8 @@ import { fetchCommunityBySlug } from "../lib/data/communities";
 import { getTournamentsByCommunity } from "../lib/data/tournaments";
 import { fetchPlayersByCommunity, deactivatePlayer } from "../lib/data/players";
 import CommunityMedalLeague from "../components/CommunityMedalLeague";
-
+import { Calendar } from "lucide-react";
+import { PersonStanding } from "lucide-react";
 // === Typer ===
 type Player = {
     id: string;
@@ -167,8 +168,8 @@ export default function CommunityPage() {
 
             {/* === TURNERINGAR === */}
             <section>
-                <h2 className="text-2xl font-display font-bold text-limecore mb-4">
-                    Senaste turneringar
+                <h2 className="text-2xl font-display  text-limecore mb-4">
+                    <Calendar className="text-limecore inline w-6 h-6 mr-1 -mt-1" />   Senaste turneringarna
                 </h2>
 
                 {loadingTournaments ? (
@@ -190,40 +191,42 @@ export default function CommunityPage() {
 
 
             {/* === SPELARE === */}
-            <section className="bg-nightcourt rounded-2xl p-6 shadow-lg border border-steelgrey/20">
-                <h2 className="text-2xl font-display font-bold text-limecore mb-4">
-                    Aktiva spelare
-                </h2>
 
-                {loadingPlayers ? (
-                    <p className="text-steelgrey">Laddar spelare...</p>
-                ) : players.length === 0 ? (
-                    <p className="text-steelgrey">
-                        Inga aktiva spelare i denna gemenskap.
-                    </p>
-                ) : (
-                    <ul className="divide-y divide-steelgrey/20">
-                        {players.map((p) => (
-                            <li
-                                key={p.id}
-                                className="flex justify-between items-center py-3"
-                            >
-                                <div>
-                                    <p className="text-courtwhite font-medium">{p.name}</p>
-                                    <p className="text-steellight text-sm">
-                                        Skapad {new Date(p.created_at).toLocaleDateString("sv-SE")}
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => handleDeactivate(p.id, p.name)}
-                                    className="text-red-400 hover:text-red-500 text-sm font-semibold transition"
+            <section >
+                <h2 className="text-2xl font-display font-bold text-limecore mb-4">
+                    <PersonStanding className="text-limecore inline w-6 h-6 mr-1 -mt-1" />    Aktiva spelare
+                </h2>
+                <div className="bg-nightcourt rounded-2xl p-6 shadow-lg border border-steelgrey/20">
+                    {loadingPlayers ? (
+                        <p className="text-steelgrey">Laddar spelare...</p>
+                    ) : players.length === 0 ? (
+                        <p className="text-steelgrey">
+                            Inga aktiva spelare i denna gemenskap.
+                        </p>
+                    ) : (
+                        <ul className="divide-y divide-steelgrey/20">
+                            {players.map((p) => (
+                                <li
+                                    key={p.id}
+                                    className="flex justify-between items-center py-3"
                                 >
-                                    Arkivera
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                )}
+                                    <div>
+                                        <p className="text-courtwhite font-medium">{p.name}</p>
+                                        <p className="text-steellight text-sm">
+                                            Skapad {new Date(p.created_at).toLocaleDateString("sv-SE")}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => handleDeactivate(p.id, p.name)}
+                                        className="text-red-400 hover:text-red-500 text-sm font-semibold transition"
+                                    >
+                                        Arkivera
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
             </section>
 
         </div>

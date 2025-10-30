@@ -9,18 +9,13 @@ export default function Tournaments({ data, showCommunity = true }: Props) {
     console.log("Tournaments data:", data);
     return (
         <section className="bg-nightcourt rounded-2xl p-6 shadow-lg border border-steelgrey/20">
-            <div className="flex items-center gap-2 mb-6">
-                <Calendar className="text-limecore w-6 h-6" />
-                <h2 className="text-xl font-display font-bold text-courtwhite">
-                    Senaste turneringarna
-                </h2>
-            </div>
+
 
             <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-left text-sm md:text-base">
                     <thead>
                         <tr className="border-b border-steelgrey/30 text-steelgrey uppercase text-xs tracking-wider">
-                            <th className="py-2">Turnering</th>
+                            <th className="py-2 px-3">Turnering</th>
                             {showCommunity && <th className="py-2">Gemenskap</th>}
                             <th className="py-2">Topp 3</th>
                             <th className="py-2 text-right">Datum</th>
@@ -32,7 +27,7 @@ export default function Tournaments({ data, showCommunity = true }: Props) {
                                 key={t.id}
                                 className="border-b border-steelgrey/20 hover:bg-limedark/10 transition"
                             >
-                                <td className="py-3 font-semibold text-courtwhite whitespace-nowrap pr-4">
+                                <td className="py-3 px-3 font-semibold text-courtwhite whitespace-nowrap pr-4">
                                     <Link
                                         to={`/tournaments/${t.id}`}
                                         className="font-semibold text-courtwhite underline hover:text-limecore transition"

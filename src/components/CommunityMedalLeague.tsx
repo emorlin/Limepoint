@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { getTournamentById } from "../lib/data/tournaments";
+import { Trophy } from "lucide-react";
 
 // === Typer i linje med TournamentPlayPage ===
 type Match = {
@@ -172,8 +173,8 @@ export default function CommunityMedalLeague({ community }: { community: string 
 
     return (
         <section>
-            <h2 className="text-2xl font-display text-limecore mb-4">🏆 Medaljliga</h2>
-            <div className="overflow-x-auto rounded-2xl border border-steelgrey/20 bg-nightcourt">
+            <h2 className="text-2xl font-display text-limecore mb-4">  <Trophy className="text-limecore inline w-6 h-6 mr-1 -mt-1" />    Medaljliga</h2>
+            <div className="bg-nightcourt rounded-2xl p-6 shadow-lg border border-steelgrey/20">
                 <table className="w-full text-sm md:text-base border-collapse">
                     <thead className="text-steelgrey border-b border-steelgrey/30 uppercase text-xs tracking-wider">
                         <tr>
@@ -190,7 +191,7 @@ export default function CommunityMedalLeague({ community }: { community: string 
                                 className="border-b border-steelgrey/20 hover:bg-limedark/10 transition"
                             >
                                 <td className="py-2 px-3 flex items-center gap-2">
-                                    <span className="w-5 text-right text-limecore font-bold">{i + 1}</span>
+                                    <span className="w-5  text-limecore font-bold">{i + 1}</span>
                                     <span className="text-courtwhite font-medium truncate">{p.name}</span>
                                 </td>
                                 <td className="text-center text-yellow-400 font-semibold">{p.gold}</td>
