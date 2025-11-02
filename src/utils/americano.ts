@@ -1,181 +1,23 @@
 // utils/americano.ts
 
 /**
- * Genererar ett korrekt Americano-schema för 4, 8, 12 eller 16 spelare.
- * Varje spelare spelar mot alla andra, men med varierande partners.
- * Returnerar en lista av matcher som kan sparas direkt till Supabase.
+ * Genererar ett korrekt och varierat Americano-schema.
+ * - Inga spelare har samma partner mer än en gång.
+ * - Ordningen på matcher och spelare roteras för variation.
  */
 export function generateAmericanoMatches(playerIds: string[]) {
     const n = playerIds.length;
-
-    if (![4, 8, 12, 16].includes(n)) {
-        throw new Error("Americano stöder endast 4, 8, 12 eller 16 spelare.");
+    if (n % 4 !== 0) {
+        throw new Error("Antalet spelare måste vara delbart med 4 (t.ex. 4, 8, 12, 16).");
     }
 
-    // 🔹 Fasta, välbeprövade scheman
-    // (baserat på vanliga Americano-rotationer – dessa ger perfekt balans)
-    const patterns: Record<number, number[][][]> = {
-        4: [
-            [[1, 2, 3, 4]], // R1
-            [[1, 3, 2, 4]], // R2
-            [[1, 4, 2, 3]], // R3
-        ],
-
-        8: [
-            [
-                [1, 2, 3, 4],
-                [5, 6, 7, 8],
-            ],
-            [
-                [1, 3, 5, 7],
-                [2, 4, 6, 8],
-            ],
-            [
-                [1, 4, 6, 7],
-                [2, 3, 5, 8],
-            ],
-            [
-                [1, 5, 4, 8],
-                [2, 6, 3, 7],
-            ],
-            [
-                [1, 6, 2, 7],
-                [3, 8, 4, 5],
-            ],
-            [
-                [1, 7, 3, 8],
-                [2, 5, 4, 6],
-            ],
-            [
-                [1, 8, 2, 5],
-                [3, 7, 4, 6],
-            ],
-        ],
-
-        12: [
-            [
-                [1, 2, 3, 4],
-                [5, 6, 7, 8],
-                [9, 10, 11, 12],
-            ],
-            [
-                [1, 3, 5, 7],
-                [2, 4, 6, 8],
-                [9, 11, 10, 12],
-            ],
-            [
-                [1, 4, 6, 7],
-                [2, 3, 5, 8],
-                [9, 12, 10, 11],
-            ],
-            [
-                [1, 5, 4, 8],
-                [2, 6, 3, 7],
-                [9, 11, 10, 12],
-            ],
-            [
-                [1, 6, 2, 7],
-                [3, 8, 4, 5],
-                [9, 10, 11, 12],
-            ],
-            [
-                [1, 7, 3, 8],
-                [2, 5, 4, 6],
-                [9, 12, 10, 11],
-            ],
-            [
-                [1, 8, 2, 5],
-                [3, 7, 4, 6],
-                [9, 11, 10, 12],
-            ],
-            [
-                [1, 9, 2, 10],
-                [3, 11, 4, 12],
-                [5, 6, 7, 8],
-            ],
-            [
-                [1, 10, 3, 11],
-                [2, 12, 4, 9],
-                [5, 7, 6, 8],
-            ],
-            [
-                [1, 11, 2, 12],
-                [3, 9, 4, 10],
-                [5, 8, 6, 7],
-            ],
-            [
-                [1, 12, 3, 9],
-                [2, 10, 4, 11],
-                [5, 6, 7, 8],
-            ],
-        ],
-
-        16: [
-            [
-                [1, 2, 3, 4],
-                [5, 6, 7, 8],
-                [9, 10, 11, 12],
-                [13, 14, 15, 16],
-            ],
-            [
-                [1, 3, 5, 7],
-                [2, 4, 6, 8],
-                [9, 11, 13, 15],
-                [10, 12, 14, 16],
-            ],
-            [
-                [1, 4, 6, 7],
-                [2, 3, 5, 8],
-                [9, 12, 14, 15],
-                [10, 11, 13, 16],
-            ],
-            [
-                [1, 5, 4, 8],
-                [2, 6, 3, 7],
-                [9, 13, 12, 16],
-                [10, 14, 11, 15],
-            ],
-            [
-                [1, 6, 2, 7],
-                [3, 8, 4, 5],
-                [9, 14, 10, 15],
-                [11, 13, 12, 16],
-            ],
-            [
-                [1, 7, 3, 8],
-                [2, 5, 4, 6],
-                [9, 15, 11, 16],
-                [10, 12, 13, 14],
-            ],
-            [
-                [1, 8, 2, 5],
-                [3, 7, 4, 6],
-                [9, 16, 10, 13],
-                [11, 14, 12, 15],
-            ],
-            [
-                [1, 9, 2, 10],
-                [3, 11, 4, 12],
-                [5, 13, 6, 14],
-                [7, 15, 8, 16],
-            ],
-            [
-                [1, 10, 3, 11],
-                [2, 12, 4, 9],
-                [5, 14, 7, 13],
-                [6, 15, 8, 16],
-            ],
-            [
-                [1, 11, 2, 12],
-                [3, 9, 4, 10],
-                [5, 15, 6, 16],
-                [7, 13, 8, 14],
-            ],
-        ],
-    };
-
-    const pattern = patterns[n];
-    if (!pattern) throw new Error(`Inget schema definierat för ${n} spelare.`);
+    // 🔹 skapa alla möjliga par (utan ordning)
+    const pairs: [string, string][] = [];
+    for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+            pairs.push([playerIds[i], playerIds[j]]);
+        }
+    }
 
     const matches: {
         round: number;
@@ -187,17 +29,82 @@ export function generateAmericanoMatches(playerIds: string[]) {
         score2: number;
     }[] = [];
 
-    for (let round = 0; round < pattern.length; round++) {
-        for (const [a, b, c, d] of pattern[round]) {
+    const playedTogether = new Set<string>();
+    let round = 1;
+
+    // 🔹 skapa matcher
+    while (pairs.length > 0) {
+        const usedPlayers = new Set<string>();
+        const roundPairs: [string, string, string, string][] = [];
+
+        let i = 0;
+        while (i < pairs.length) {
+            const [a, b] = pairs[i];
+            if (usedPlayers.has(a) || usedPlayers.has(b)) {
+                i++;
+                continue;
+            }
+
+            const key = [a, b].sort().join("-");
+            if (playedTogether.has(key)) {
+                i++;
+                continue;
+            }
+
+            const oppIndex = pairs.findIndex(
+                ([c, d], idx) =>
+                    idx > i && !usedPlayers.has(c) && !usedPlayers.has(d) && ![a, b].includes(c) && ![a, b].includes(d)
+            );
+
+            if (oppIndex !== -1) {
+                const [c, d] = pairs[oppIndex];
+                roundPairs.push([a, b, c, d]);
+                usedPlayers.add(a);
+                usedPlayers.add(b);
+                usedPlayers.add(c);
+                usedPlayers.add(d);
+                playedTogether.add(key);
+                pairs.splice(oppIndex, 1);
+                pairs.splice(i, 1);
+            } else {
+                i++;
+            }
+        }
+
+        if (roundPairs.length === 0) break;
+
+        // 🔸 skapa matchobjekt
+        for (const [a, b, c, d] of roundPairs) {
             matches.push({
-                round: round + 1,
-                team1_player1: playerIds[a - 1],
-                team1_player2: playerIds[b - 1],
-                team2_player1: playerIds[c - 1],
-                team2_player2: playerIds[d - 1],
+                round,
+                team1_player1: a,
+                team1_player2: b,
+                team2_player1: c,
+                team2_player2: d,
                 score1: 0,
                 score2: 0,
             });
+        }
+
+        round++;
+    }
+
+    // 🌀 NYTT: slumpa ordning på spelare inom varje match
+    for (const match of matches) {
+        if (Math.random() > 0.5)
+            [match.team1_player1, match.team1_player2] = [match.team1_player2, match.team1_player1];
+        if (Math.random() > 0.5)
+            [match.team2_player1, match.team2_player2] = [match.team2_player2, match.team2_player1];
+    }
+
+    // 🌀 NYTT: slumpa ordning på matcherna per runda
+    const maxRound = Math.max(...matches.map((m) => m.round));
+    for (let r = 1; r <= maxRound; r++) {
+        const roundMatches = matches.filter((m) => m.round === r);
+        roundMatches.sort(() => Math.random() - 0.5);
+        const startIndex = matches.findIndex((m) => m.round === r);
+        for (let i = 0; i < roundMatches.length; i++) {
+            matches[startIndex + i] = roundMatches[i];
         }
     }
 
