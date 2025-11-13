@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { CheckCircle, XCircle, AlertCircle } from "lucide-react";
 
 // === Typer ===
 type PlayerName = string;
@@ -23,6 +24,91 @@ type Tournament = {
     matches: Match[];
 };
 
+interface ValidationResult {
+    valid: boolean;
+    issues: string[];
+    stats: {
+        totalMatches: number;
+        maxOpponentMeetings: number;
+        avgOpponentMeetings: string;
+        opponentMeetingsDistribution: {
+            once: number;
+            twice: number;
+            thrice: number;
+            moreThanThrice: number;
+        };
+    };
+}
+
+// === Valideringsfunktion ===
+function validateAmericanoSchedule(matches: Match[], players: PlayerName[]): ValidationResult {
+    const partnerCount = new Map<string, number>();
+    const opponentCount = new Map<string, number>();
+
+    function getPairKey(a: string, b: string): string {
+        return [a, b].sort().join("-");
+    }
+
+    for (const match of matches) {
+        const team1 = match.team1;
+        const team2 = match.team2;
+
+        // Räkna partners
+        if (team1.length === 2) {
+            const key = getPairKey(team1[0], team1[1]);
+            partnerCount.set(key, (partnerCount.get(key) || 0) + 1);
+        }
+        if (team2.length === 2) {
+            const key = getPairKey(team2[0], team2[1]);
+            partnerCount.set(key, (partnerCount.get(key) || 0) + 1);
+        }
+
+        // Räkna motståndare
+        for (const p1 of team1) {
+            for (const p2 of team2) {
+                const key = getPairKey(p1, p2);
+                opponentCount.set(key, (opponentCount.get(key) || 0) + 1);
+            }
+        }
+    }
+
+    const issues: string[] = [];
+
+    // Kontrollera partners (ska vara exakt 1)
+    for (const [pair, count] of partnerCount.entries()) {
+        if (count !== 1) {
+            issues.push(`Par ${pair} har spelat tillsammans ${count} gånger (ska vara 1)`);
+        }
+    }
+
+    // Kontrollera motståndare (max 3 accepteras, 4+ är problem)
+    for (const [pair, count] of opponentCount.entries()) {
+        if (count > 3) {
+            issues.push(`Par ${pair} har mötts som motståndare ${count} gånger (max 3 rekommenderat)`);
+        }
+    }
+
+    const opponentValues = Array.from(opponentCount.values());
+
+    return {
+        valid: issues.length === 0,
+        issues,
+        stats: {
+            totalMatches: matches.length,
+            maxOpponentMeetings: opponentValues.length > 0 ? Math.max(...opponentValues) : 0,
+            avgOpponentMeetings: opponentValues.length > 0
+                ? (opponentValues.reduce((a, b) => a + b, 0) / opponentValues.length).toFixed(2)
+                : "0",
+            opponentMeetingsDistribution: {
+                once: opponentValues.filter(v => v === 1).length,
+                twice: opponentValues.filter(v => v === 2).length,
+                thrice: opponentValues.filter(v => v === 3).length,
+                moreThanThrice: opponentValues.filter(v => v > 3).length
+            }
+        }
+    };
+}
+
 // === Komponent ===
 export default function TournamentDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -31,8 +117,9 @@ export default function TournamentDetailPage() {
     const [tournament, setTournament] = useState<Tournament | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<"schema" | "tabell">("schema");
+    const [activeTab, setActiveTab] = useState<"schema" | "tabell" | "validering">("schema");
     const [activeRound, setActiveRound] = useState<number>(1);
+    const [validation, setValidation] = useState<ValidationResult | null>(null);
 
     // === Hämta turnering + matcher ===
     useEffect(() => {
@@ -91,7 +178,7 @@ export default function TournamentDetailPage() {
                 new Set(formattedMatches.flatMap((m) => [...m.team1, ...m.team2]))
             );
 
-            setTournament({
+            const tournamentData = {
                 id: (data as any).id,
                 name: (data as any).name,
                 community: (data as any).communities?.name || "-",
@@ -99,7 +186,15 @@ export default function TournamentDetailPage() {
                 pointsPerMatch: (data as any).points_per_match,
                 players: allPlayers,
                 matches: formattedMatches,
-            });
+            };
+
+            setTournament(tournamentData);
+
+            // Kör validering
+            if (formattedMatches.length > 0 && allPlayers.length > 0) {
+                const validationResult = validateAmericanoSchedule(formattedMatches, allPlayers);
+                setValidation(validationResult);
+            }
 
             setLoading(false);
         };
@@ -204,6 +299,15 @@ export default function TournamentDetailPage() {
                         }`}
                 >
                     Tabell
+                </button>
+                <button
+                    onClick={() => setActiveTab("validering")}
+                    className={`px-6 py-2 font-semibold transition ${activeTab === "validering"
+                        ? "text-limecore border-b-2 border-limecore"
+                        : "text-steelgrey hover:text-limecore"
+                        }`}
+                >
+                    Validering
                 </button>
             </div>
 
@@ -327,6 +431,113 @@ export default function TournamentDetailPage() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                </section>
+            )}
+
+            {/* === VALIDERING === */}
+            {activeTab === "validering" && validation && (
+                <section className="space-y-6">
+                    <h2 className="text-2xl font-semibold text-courtwhite mb-4 text-center">
+                        Valideringsresultat
+                    </h2>
+
+                    {/* Status */}
+                    <div className={`rounded-lg p-4 border-2 ${validation.valid
+                        ? 'bg-green-900/20 border-green-500'
+                        : 'bg-yellow-900/20 border-yellow-500'
+                        }`}>
+                        <div className="flex items-center gap-3">
+                            {validation.valid ? (
+                                <>
+                                    <CheckCircle className="text-green-400" size={32} />
+                                    <div>
+                                        <div className="font-bold text-lg text-green-400">Perfekt schema!</div>
+                                        <div className="text-green-300">Alla regler följs korrekt</div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <AlertCircle className="text-yellow-400" size={32} />
+                                    <div>
+                                        <div className="font-bold text-lg text-yellow-400">Schema med avvikelser</div>
+                                        <div className="text-yellow-300">Vissa par möts oftare än optimalt</div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Statistik */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <div className="bg-nightcourt rounded-lg p-4 border border-steelgrey/20">
+                            <h3 className="font-semibold text-lg mb-3 text-limecore">Allmän statistik</h3>
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-aquaserve">Totalt antal matcher:</span>
+                                    <span className="font-bold text-limecore">{validation.stats.totalMatches}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-aquaserve">Max motståndarmöten:</span>
+                                    <span className="font-bold text-limecore">{validation.stats.maxOpponentMeetings}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-aquaserve">Genomsnitt motståndarmöten:</span>
+                                    <span className="font-bold text-limecore">{validation.stats.avgOpponentMeetings}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-nightcourt rounded-lg p-4 border border-steelgrey/20">
+                            <h3 className="font-semibold text-lg mb-3 text-limecore">Fördelning motståndarmöten</h3>
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-aquaserve">Mötts 1 gång:</span>
+                                    <span className="font-bold text-green-400">
+                                        {validation.stats.opponentMeetingsDistribution.once} par
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-aquaserve">Mötts 2 gånger:</span>
+                                    <span className="font-bold text-green-400">
+                                        {validation.stats.opponentMeetingsDistribution.twice} par
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-aquaserve">Mötts 3 gånger:</span>
+                                    <span className="font-bold text-yellow-400">
+                                        {validation.stats.opponentMeetingsDistribution.thrice} par
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-aquaserve">Mötts &gt;3 gånger:</span>
+                                    <span className="font-bold text-red-400">
+                                        {validation.stats.opponentMeetingsDistribution.moreThanThrice} par
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Problem */}
+                    {validation.issues.length > 0 && (
+                        <div className="bg-red-900/20 border border-red-500 rounded-lg p-4">
+                            <h3 className="font-semibold text-red-400 mb-2 flex items-center gap-2">
+                                <XCircle size={20} />
+                                Problem som hittades:
+                            </h3>
+                            <ul className="space-y-1 text-sm text-red-300 max-h-64 overflow-y-auto">
+                                {validation.issues.map((issue, idx) => (
+                                    <li key={idx}>• {issue}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Info om begränsningar */}
+                    <div className="bg-nightcourt border border-steelgrey/20 rounded-lg p-4 text-sm text-aquaserve">
+                        <strong className="text-limecore">ℹ️ Obs:</strong> Med {tournament.players.length} spelare är det matematiskt omöjligt att hålla alla motståndarmöten under 3 gånger.
+                        Algoritmen minimerar antalet möten så mycket som möjligt.
                     </div>
                 </section>
             )}

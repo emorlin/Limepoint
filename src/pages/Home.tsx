@@ -51,7 +51,7 @@ export default function Home() {
     useEffect(() => {
         const loadTournaments = async (): Promise<void> => {
             try {
-                const data = await getRecentTournaments();
+                const data = await getRecentTournaments(5);
                 setTournaments(data as Tournament[]);
             } catch (err) {
                 console.error("❌ Fel vid hämtning av turneringar:", err);

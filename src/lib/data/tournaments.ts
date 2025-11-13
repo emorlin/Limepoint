@@ -75,7 +75,7 @@ function calculateStats(matches: { team1: string[]; team2: string[]; score: [num
 }
 
 // === Senaste turneringar ===
-export async function getRecentTournaments(limit = 5) {
+export async function getRecentTournaments(limit = 1000) {
     const { data, error } = await supabase
         .from("tournaments")
         .select(
