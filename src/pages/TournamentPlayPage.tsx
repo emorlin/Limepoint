@@ -396,17 +396,29 @@ export default function TournamentPlayPage() {
                                                         <input
                                                             type="text"
                                                             inputMode="numeric"
-                                                            value={Number.isNaN(m.score[0]) ? "" : m.score[0]}
+                                                            value={
+                                                                m.score[0] === undefined || m.score[0] === null || Number.isNaN(m.score[0])
+                                                                    ? ""
+                                                                    : m.score[0]
+                                                            }
                                                             onChange={(e) => {
                                                                 let val = e.target.value.replace(/[^0-9]/g, "");
-                                                                const num = Number(val);
-                                                                if (num > pointsPerMatch) val = String(pointsPerMatch);
-                                                                updateScore(m.id, 1, val);
+
+                                                                if (val === "") {
+                                                                    // 🧹 användaren raderade – töm båda fälten
+                                                                    updateScore(m.id, 1, "");
+                                                                    updateScore(m.id, 2, "");
+                                                                    return;
+                                                                }
+
+                                                                const num = Math.min(Number(val), pointsPerMatch);
+                                                                const other = pointsPerMatch - num;
+
+                                                                updateScore(m.id, 1, num);
+                                                                updateScore(m.id, 2, other);
                                                             }}
                                                             placeholder={`0–${pointsPerMatch}`}
-                                                            className={`w-16 bg-nightcourt border rounded-lg p-2 text-center text-courtwhite ${!isValid && total > 0
-                                                                ? "border-red-500/60"
-                                                                : "border-steelgrey/30"
+                                                            className={`w-16 bg-nightcourt border rounded-lg p-2 text-center text-courtwhite ${!isValid && total > 0 ? "border-red-500/60" : "border-steelgrey/30"
                                                                 }`}
                                                         />
 
@@ -415,19 +427,32 @@ export default function TournamentPlayPage() {
                                                         <input
                                                             type="text"
                                                             inputMode="numeric"
-                                                            value={Number.isNaN(m.score[1]) ? "" : m.score[1]}
+                                                            value={
+                                                                m.score[1] === undefined || m.score[1] === null || Number.isNaN(m.score[1])
+                                                                    ? ""
+                                                                    : m.score[1]
+                                                            }
                                                             onChange={(e) => {
                                                                 let val = e.target.value.replace(/[^0-9]/g, "");
-                                                                const num = Number(val);
-                                                                if (num > pointsPerMatch) val = String(pointsPerMatch);
-                                                                updateScore(m.id, 2, val);
+
+                                                                if (val === "") {
+                                                                    updateScore(m.id, 1, "");
+                                                                    updateScore(m.id, 2, "");
+                                                                    return;
+                                                                }
+
+                                                                const num = Math.min(Number(val), pointsPerMatch);
+                                                                const other = pointsPerMatch - num;
+
+                                                                updateScore(m.id, 2, num);
+                                                                updateScore(m.id, 1, other);
                                                             }}
                                                             placeholder={`0–${pointsPerMatch}`}
-                                                            className={`w-16 bg-nightcourt border rounded-lg p-2 text-center text-courtwhite ${!isValid && total > 0
-                                                                ? "border-red-500/60"
-                                                                : "border-steelgrey/30"
+                                                            className={`w-16 bg-nightcourt border rounded-lg p-2 text-center text-courtwhite ${!isValid && total > 0 ? "border-red-500/60" : "border-steelgrey/30"
                                                                 }`}
                                                         />
+
+
 
                                                     </div>
                                                 )}
