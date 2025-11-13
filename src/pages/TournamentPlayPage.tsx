@@ -111,6 +111,7 @@ function validateAmericanoSchedule(matches: Match[], players: string[]): Validat
 
 // === Komponent ===
 export default function TournamentPlayPage() {
+
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const location = useLocation();
@@ -122,6 +123,11 @@ export default function TournamentPlayPage() {
     const [activeRound, setActiveRound] = useState<number>(1);
     const [loading, setLoading] = useState<boolean>(true);
     const [validation, setValidation] = useState<ValidationResult | null>(null);
+    const [focusedMatch, setFocusedMatch] = useState<string | null>(null);
+    const [focusedTeam, setFocusedTeam] = useState<1 | 2 | null>(null);
+
+    const [editingValue, setEditingValue] = useState<string | null>(null);
+
 
     // === Hämta turnering ===
     useEffect(() => {
@@ -397,15 +403,29 @@ export default function TournamentPlayPage() {
                                                             type="text"
                                                             inputMode="numeric"
                                                             value={
-                                                                m.score[0] === undefined || m.score[0] === null || Number.isNaN(m.score[0])
-                                                                    ? ""
-                                                                    : m.score[0]
+                                                                editingValue !== null && focusedMatch === m.id && focusedTeam === 1
+                                                                    ? editingValue
+                                                                    : m.score[0] === undefined || m.score[0] === null || Number.isNaN(m.score[0])
+                                                                        ? ""
+                                                                        : m.score[0]
                                                             }
+                                                            onFocus={() => {
+                                                                setFocusedMatch(m.id);
+                                                                setFocusedTeam(1);
+                                                                setEditingValue(""); // töm initialt
+                                                            }}
+                                                            onBlur={() => {
+                                                                setFocusedMatch(null);
+                                                                setFocusedTeam(null);
+                                                                setEditingValue(null); // avsluta edit-läge
+                                                            }}
                                                             onChange={(e) => {
                                                                 let val = e.target.value.replace(/[^0-9]/g, "");
 
+                                                                // uppdatera edit-state så UI visar det du skriver
+                                                                setEditingValue(val);
+
                                                                 if (val === "") {
-                                                                    // 🧹 användaren raderade – töm båda fälten
                                                                     updateScore(m.id, 1, "");
                                                                     updateScore(m.id, 2, "");
                                                                     return;
@@ -422,22 +442,37 @@ export default function TournamentPlayPage() {
                                                                 }`}
                                                         />
 
+
                                                         <span className="text-steelgrey font-bold">–</span>
 
                                                         <input
                                                             type="text"
                                                             inputMode="numeric"
                                                             value={
-                                                                m.score[1] === undefined || m.score[1] === null || Number.isNaN(m.score[1])
-                                                                    ? ""
-                                                                    : m.score[1]
+                                                                editingValue !== null && focusedMatch === m.id && focusedTeam === 2
+                                                                    ? editingValue
+                                                                    : m.score[1] === undefined || m.score[1] === null || Number.isNaN(m.score[1])
+                                                                        ? ""
+                                                                        : m.score[1]
                                                             }
+                                                            onFocus={() => {
+                                                                setFocusedMatch(m.id);
+                                                                setFocusedTeam(2);
+                                                                setEditingValue("");
+                                                            }}
+                                                            onBlur={() => {
+                                                                setFocusedMatch(null);
+                                                                setFocusedTeam(null);
+                                                                setEditingValue(null);
+                                                            }}
                                                             onChange={(e) => {
                                                                 let val = e.target.value.replace(/[^0-9]/g, "");
 
+                                                                setEditingValue(val);
+
                                                                 if (val === "") {
-                                                                    updateScore(m.id, 1, "");
                                                                     updateScore(m.id, 2, "");
+                                                                    updateScore(m.id, 1, "");
                                                                     return;
                                                                 }
 
@@ -451,6 +486,7 @@ export default function TournamentPlayPage() {
                                                             className={`w-16 bg-nightcourt border rounded-lg p-2 text-center text-courtwhite ${!isValid && total > 0 ? "border-red-500/60" : "border-steelgrey/30"
                                                                 }`}
                                                         />
+
 
 
 
