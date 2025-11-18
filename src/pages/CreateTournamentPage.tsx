@@ -28,6 +28,7 @@ type Tournament = {
 };
 
 export default function CreateTournamentPage() {
+    const [isButtonClicked, setIsButtonClicked] = useState(false);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
 
@@ -228,6 +229,7 @@ export default function CreateTournamentPage() {
                     Turneringsnamn <span className="text-limecore">*</span>
                 </label>
                 <input
+                    id="tournamentName"
                     type="text"
                     placeholder="Ex. Fredagspadel #24"
                     value={tournamentName}
@@ -379,15 +381,25 @@ export default function CreateTournamentPage() {
             </section>
 
             {/* SKAPA */}
-            <div className="pt-6 text-center">
+            <div className="pt-6">
                 <button
-                    disabled={!canCreate}
-                    onClick={handleCreate}
+
+                    onClick={async () => {
+                        setIsButtonClicked(true);
+                        if (canCreate) {
+                            await handleCreate();
+                        }
+                    }}
                     className="bg-limecore text-nightcourt font-semibold px-6 py-3 rounded-xl hover:bg-limedark transition disabled:opacity-50"
                 >
                     Skapa turnering →
                 </button>
+
+
             </div>
+            {isButtonClicked && !canCreate && (
+                <p className=" text-red-400 text-sm font-semibold ">Du måste ange ett <a href="#tournamentName" className="underline">turneringsnamn</a> samt välja {numPlayers} spelare för att kunna skapa en turnering.</p>
+            )}
         </div>
     );
 }
